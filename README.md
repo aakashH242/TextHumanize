@@ -1693,7 +1693,7 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 - **Expanded API docs** — authentication guide, per-plan rate limits, PAYG billing docs, error codes (401/429)
 - **Competitor comparison table** added to Pricing page (vs Quillbot, Undetectable.ai, StealthGPT)
 
-### SentenceValidator™ — Interstage Quality Gate (v0.27.0)
+### SentenceValidator™ — Interstage Quality Gate (v0.28.0)
 - **`sentence_validator.py` (350 lines)** — sentence-level artifact detection running at 7 checkpoints between pipeline stages
 - **10 artifact checks per sentence:** duplicate words, broken contractions, orphaned punctuation, double conjunctions, dangling conjunctions, unterminated parens, triple+ repeats, fragment chains, conjunction chains, empty sentences
 - **Final sanitization** in `run()` method catches post-loop residual artifacts
