@@ -77,6 +77,21 @@ class TestStructureDiversifier:
         result = sd.process("")
         assert result == ""
 
+    def test_html_wrapped_text_is_not_fully_skipped(self):
+        """Inline HTML-теги не должны блокировать структуру полностью."""
+        from texthumanize.segmenter import Segmenter
+
+        sd = StructureDiversifier(lang="en", profile="chat", intensity=100, seed=42)
+        html = (
+            "<p>Furthermore, the implementation is comprehensive. "
+            "Moreover, the system is robust.</p>"
+        )
+        segmented = Segmenter().segment(html)
+        out = sd.process(segmented.text)
+        restored = segmented.restore(out)
+        assert "<p>" in restored and "</p>" in restored
+        assert len(sd.changes) > 0
+
 
 class TestRepetitions:
     """Тесты уменьшения повторов."""

@@ -117,14 +117,20 @@ class Pipeline
 
         $changes = [];
         $processed = $text;
+        $keepKeywords = $options->preserve['keep_keywords']
+            ?? $options->preserve['keywords']
+            ?? [];
+        $brandTerms = $options->preserve['brand_terms']
+            ?? $options->preserve['brands']
+            ?? [];
 
         // --- Stage 1: Segmentation ---
         $processed = self::runPlugins('segmentation', $processed, $lang, $options->profile, $options->intensity, true);
         $segmenter = new Segmenter();
         $segmented = $segmenter->segment(
             $processed,
-            $options->preserve['keywords'] ?? [],
-            $options->preserve['brands'] ?? [],
+            $keepKeywords,
+            $brandTerms,
         );
         $processed = $segmented->text;
         $processed = self::runPlugins('segmentation', $processed, $lang, $options->profile, $options->intensity, false);
@@ -231,8 +237,8 @@ class Pipeline
             $processed = $text;
             $segmented2 = $segmenter->segment(
                 $processed,
-                $options->preserve['keywords'] ?? [],
-                $options->preserve['brands'] ?? [],
+                $keepKeywords,
+                $brandTerms,
             );
             $processed = $segmented2->text;
             [$processed, $_] = $typoNorm->normalize($processed, $lang);

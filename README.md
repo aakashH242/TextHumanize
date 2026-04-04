@@ -71,7 +71,7 @@
 - [Security & Limits](#-security--limits)
 - [For Business & Enterprise](#-for-business--enterprise)
 - [FAQ & Troubleshooting](#-faq--troubleshooting)
-- [What's New in v0.28.0](#-whats-new-in-v0270)
+- [What's New in v0.28.0](#-whats-new-in-v0280)
 - [Contributing](#-contributing)
 - [Limitations](#-limitations)
 - [Support the Project](#-support-the-project)
@@ -187,7 +187,7 @@ git clone https://github.com/ksanyok/TextHumanize.git
 cd TextHumanize && pip install -e .
 ```
 
-> **Tip:** Pin your version for production: `pip install texthumanize==0.25.0`
+> **Tip:** Pin your version for production: `pip install texthumanize==0.28.0`
 
 <details>
 <summary><b>PHP / TypeScript</b></summary>

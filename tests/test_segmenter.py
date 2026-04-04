@@ -1,6 +1,6 @@
 """Тесты сегментатора — защита URL, кода и других элементов."""
 
-from texthumanize.segmenter import Segmenter
+from texthumanize.segmenter import Segmenter, skip_placeholder_sentence
 
 
 class TestSegmenter:
@@ -126,3 +126,17 @@ class TestSegmenter:
         result = self.segmenter.segment("")
         assert result.text == ""
         assert result.segments == []
+
+    def test_skip_placeholder_sentence_allows_inline_html_tags(self):
+        """Текст с inline HTML тегами не должен полностью пропускаться."""
+        segmented = self.segmenter.segment(
+            "<p>Furthermore, the comprehensive system ensures robust coverage.</p>",
+        )
+        assert skip_placeholder_sentence(segmented.text) is False
+
+    def test_skip_placeholder_sentence_blocks_non_html_placeholders(self):
+        """URL/code placeholders по-прежнему блокируют word-level изменения."""
+        segmented = self.segmenter.segment(
+            "Docs: https://example.com/path?q=1 should remain untouched.",
+        )
+        assert skip_placeholder_sentence(segmented.text) is True

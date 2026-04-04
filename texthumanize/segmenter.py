@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 PLACEHOLDER_PREFIX = "\x00THZ_"
 PLACEHOLDER_SUFFIX = "\x00"
 _PLACEHOLDER_RE = re.compile(r'\x00THZ_[A-Z_]+_\d+\x00')
+_PLACEHOLDER_KIND_RE = re.compile(r'\x00THZ_([A-Z_]+)_\d+\x00')
+_INLINE_SAFE_PLACEHOLDER_KINDS = {"HTML_TAG"}
 
 # ── Placeholder-aware helpers (used by ALL pipeline stages) ───
 
@@ -29,9 +31,22 @@ def is_placeholder_word(word: str) -> bool:
 
 
 def skip_placeholder_sentence(sentence: str) -> bool:
-    """Return True if the sentence contains placeholder(s) and
-    should be left untouched by word-level transformations."""
-    return "\x00" in sentence
+    """Return True when a sentence should be skipped by word-level stages.
+
+    HTML inline tags are safe to keep during sentence-level processing:
+    they protect markup while still allowing transformations in visible text.
+    Other protected kinds (URLs, code, emails, etc.) still trigger skip.
+    """
+    if "\x00" not in sentence:
+        return False
+
+    kinds = {
+        m.group(1)
+        for m in _PLACEHOLDER_KIND_RE.finditer(sentence)
+    }
+    if not kinds:
+        return True
+    return any(kind not in _INLINE_SAFE_PLACEHOLDER_KINDS for kind in kinds)
 
 
 @dataclass

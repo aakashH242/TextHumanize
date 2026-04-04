@@ -61,7 +61,7 @@ class SemanticParaphraser
         $result = [];
         foreach ($lines as $line) {
             // Skip lines containing segmenter placeholders
-            if (str_contains($line, "\x00THZ_") || trim($line) === '') {
+            if (trim($line) === '' || Segmenter::hasBlockingPlaceholder($line)) {
                 $result[] = $line;
             } else {
                 $result[] = $this->processParagraph($line);

@@ -40,11 +40,26 @@ class SegmentedText
      */
     public function restore(string $processedText): string
     {
-        // Restore in reverse order
+        // Pass 1: exact replacement (fast path)
         $segments = array_reverse($this->segments);
         foreach ($segments as $seg) {
             $processedText = str_replace($seg->placeholder, $seg->original, $processedText);
         }
+
+        // Pass 2: case-insensitive recovery if placeholders were case-mutated.
+        if (str_contains($processedText, "\x00THZ_")) {
+            foreach ($segments as $seg) {
+                $pattern = '/' . preg_quote($seg->placeholder, '/') . '/iu';
+                $processedText = preg_replace($pattern, $seg->original, $processedText) ?? $processedText;
+            }
+        }
+
+        // Pass 3: strip orphaned placeholders/null bytes.
+        if (str_contains($processedText, "\x00")) {
+            $processedText = preg_replace('/\x00THZ_[A-Z_]+_\d+\x00/iu', '', $processedText) ?? $processedText;
+            $processedText = str_replace("\x00", '', $processedText);
+        }
+
         return $processedText;
     }
 }
@@ -54,6 +69,8 @@ class SegmentedText
  */
 class Segmenter
 {
+    private const INLINE_SAFE_PLACEHOLDER_KINDS = ['HTML'];
+
     private array $preserve;
     private int $counter = 0;
 
@@ -69,16 +86,29 @@ class Segmenter
             'html' => true,
             'numbers' => false,
             'brand_terms' => [],
+            'keep_keywords' => [],
         ], $preserve);
     }
 
     /**
      * Segment text, replacing protected elements with placeholders.
+     *
+     * @param string[] $keepKeywords
+     * @param string[] $brandTerms
      */
-    public function segment(string $text): SegmentedText
+    public function segment(string $text, array $keepKeywords = [], array $brandTerms = []): SegmentedText
     {
         $segments = [];
         $this->counter = 0;
+
+        if (!empty($keepKeywords)) {
+            $existing = $this->preserve['keep_keywords'] ?? [];
+            $this->preserve['keep_keywords'] = array_values(array_unique([...$existing, ...$keepKeywords]));
+        }
+        if (!empty($brandTerms)) {
+            $existing = $this->preserve['brand_terms'] ?? [];
+            $this->preserve['brand_terms'] = array_values(array_unique([...$existing, ...$brandTerms]));
+        }
 
         // Code blocks
         if ($this->preserve['code_blocks']) {
@@ -145,9 +175,34 @@ class Segmenter
     {
         return preg_replace_callback($pattern, function (array $m) use ($kind, &$segments): string {
             $this->counter++;
-            $placeholder = "\x00THZ_{$kind}_{$this->counter}\x00";
+            $placeholder = "\x00THZ_" . strtoupper($kind) . "_{$this->counter}\x00";
             $segments[] = new ProtectedSegment($placeholder, $m[0], $kind);
             return $placeholder;
         }, $text) ?? $text;
+    }
+
+    /**
+     * Return true when a line contains placeholders that should block
+     * sentence-level stages. Inline HTML placeholders are allowed.
+     */
+    public static function hasBlockingPlaceholder(string $text): bool
+    {
+        if (!str_contains($text, "\x00THZ_")) {
+            return false;
+        }
+
+        if (!preg_match_all('/\x00THZ_([A-Z_]+)_\d+\x00/iu', $text, $matches)) {
+            // If markers are corrupted, be conservative.
+            return true;
+        }
+
+        foreach ($matches[1] as $kind) {
+            $kind = strtoupper((string) $kind);
+            if (!in_array($kind, self::INLINE_SAFE_PLACEHOLDER_KINDS, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

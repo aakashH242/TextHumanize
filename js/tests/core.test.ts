@@ -11,7 +11,7 @@ import { getLangPack, hasDeepSupport, supportedLanguages } from '../src/lang';
 
 describe('Version', () => {
   it('should export version string', () => {
-    expect(VERSION).toBe('0.9.0');
+    expect(VERSION).toBe('0.28.0');
   });
 });
 
@@ -65,6 +65,14 @@ describe('humanize', () => {
   it('should return changes array', () => {
     const result = humanize('Hello  world.  Test text.', { lang: 'en' });
     expect(Array.isArray(result.changes)).toBe(true);
+  });
+
+  it('should keep HTML tags while processing visible text', () => {
+    const src = '<p>Furthermore, the implementation is comprehensive. Moreover, the system is robust.</p>';
+    const result = humanize(src, { lang: 'en', intensity: 80 });
+    expect(result.text).toContain('<p>');
+    expect(result.text).toContain('</p>');
+    expect(result.text).not.toBe(src);
   });
 });
 

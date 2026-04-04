@@ -288,7 +288,7 @@ composer require ksanyok/text-humanize
         }
     ],
     "require": {
-        "ksanyok/text-humanize": "^0.11"
+        "ksanyok/text-humanize": "^0.28"
     }
 }
 ```
@@ -311,7 +311,7 @@ npm install
 
 ```python
 import texthumanize
-print(texthumanize.__version__)  # 0.15.2
+print(texthumanize.__version__)  # 0.28.0
 ```
 
 ### Updating to latest version
@@ -323,7 +323,7 @@ print(texthumanize.__version__)  # 0.15.2
 pip install --upgrade texthumanize
 
 # Update to specific version
-pip install texthumanize>=0.15.0
+pip install texthumanize>=0.28.0
 ```
 
 #### From source (GitHub)
@@ -342,7 +342,7 @@ composer require ksanyok/text-humanize
 
 # Если пакет не на Packagist — добавьте VCS-репозиторий:
 composer config repositories.texthumanize vcs https://github.com/ksanyok/TextHumanize
-composer require ksanyok/text-humanize:^0.11
+composer require ksanyok/text-humanize:^0.28
 
 # Или обновите из исходников
 cd php/
@@ -366,15 +366,15 @@ npm install && npm run build
 
 ```bash
 # Python — install directly from a GitHub release tag
-pip install git+https://github.com/ksanyok/TextHumanize.git@v0.15.2
+pip install git+https://github.com/ksanyok/TextHumanize.git@v0.28.0
 
 # Or download a release archive
-pip install https://github.com/ksanyok/TextHumanize/archive/refs/tags/v0.15.2.tar.gz
+pip install https://github.com/ksanyok/TextHumanize/archive/refs/tags/v0.28.0.tar.gz
 ```
 
 > **Tip:** Pin your version in `requirements.txt` for reproducible builds:
 > ```
-> texthumanize @ git+https://github.com/ksanyok/TextHumanize.git@v0.15.2
+> texthumanize @ git+https://github.com/ksanyok/TextHumanize.git@v0.28.0
 > ```
 
 ---

@@ -12,6 +12,7 @@ use TextHumanize\Pipeline\RepetitionReducer;
 use TextHumanize\Pipeline\StructureDiversifier;
 use TextHumanize\Pipeline\TextNaturalizer;
 use TextHumanize\Pipeline\LivelinessInjector;
+use TextHumanize\Pipeline\Segmenter;
 use TextHumanize\Pipeline\UniversalProcessor;
 
 class PipelineStagesTest extends TestCase
@@ -141,6 +142,37 @@ class PipelineStagesTest extends TestCase
         $text = 'Short one. Also short. Very brief. Tiny. Small too.';
         $result = $diversifier->process($text, $langPack, $profile, 70, $rng);
         $this->assertNotEmpty($result);
+    }
+
+    public function testSegmenterInlineHtmlPlaceholdersAreNonBlocking(): void
+    {
+        $line = "\x00THZ_HTML_1\x00Text\x00THZ_HTML_2\x00";
+        $this->assertFalse(Segmenter::hasBlockingPlaceholder($line));
+    }
+
+    public function testSegmenterUrlPlaceholderIsBlocking(): void
+    {
+        $line = "Open \x00THZ_URL_1\x00 now";
+        $this->assertTrue(Segmenter::hasBlockingPlaceholder($line));
+    }
+
+    public function testStructureDiversifierProcessesHtmlWrappedText(): void
+    {
+        $segmenter = new Segmenter();
+        $segmented = $segmenter->segment(
+            '<p>Furthermore, the implementation is comprehensive. Moreover, the system is robust.</p>',
+        );
+
+        $diversifier = new StructureDiversifier();
+        $langPack = Registry::get('en');
+        $profile = Profiles::get('web');
+        $rng = new RandomHelper(42);
+
+        $processed = $diversifier->process($segmented->text, $langPack, $profile, 100, $rng);
+        $restored = $segmented->restore($processed);
+
+        $this->assertStringContainsString('<p>', $restored);
+        $this->assertStringContainsString('</p>', $restored);
     }
 
     // ==================== TextNaturalizer ====================

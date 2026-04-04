@@ -64,7 +64,7 @@ class StructureDiversifier
         foreach ($lines as $line) {
             // Skip empty lines and lines with segmenter placeholders
             // (trim() strips \x00 which destroys placeholder markers)
-            if (trim($line) === '' || str_contains($line, "\x00THZ_")) {
+            if (trim($line) === '' || Segmenter::hasBlockingPlaceholder($line)) {
                 $result[] = $line;
             } else {
                 $result[] = $this->$method($line, $prob);

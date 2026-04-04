@@ -20,7 +20,7 @@ composer require ksanyok/text-humanize
 
 ```bash
 composer config repositories.texthumanize vcs https://github.com/ksanyok/TextHumanize
-composer require ksanyok/text-humanize:^0.11
+composer require ksanyok/text-humanize:^0.28
 ```
 
 ## Quick Start

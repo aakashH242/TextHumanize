@@ -32,6 +32,12 @@ jobs:
         continue-on-error: true
         run: twine check dist/*
 
+      - name: Verify version sync
+        run: python scripts/check_version_sync.py
+
+      - name: Run release smoke test
+        run: python scripts/release_smoke_test.py
+
       - name: Show built packages
         run: ls -la dist/
 

@@ -3,6 +3,20 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.28.0] - 2026-04-05
+
+### Fixed
+- **HTML processing no longer fully skipped in Python pipeline** — `skip_placeholder_sentence()` now allows sentence-level processing when a sentence contains only inline HTML tag placeholders (`THZ_HTML_TAG_*`). This preserves tags while still transforming visible text inside markup.
+- **PHP HTML parity** — all paragraph-level stages in the PHP port (`StructureDiversifier`, `TextNaturalizer`, `LivelinessInjector`, `SemanticParaphraser`) now use placeholder-aware blocking logic and no longer skip lines that contain only HTML placeholders.
+- **PHP segmenter API compatibility** — `Segmenter::segment()` now accepts optional keyword/brand arguments used by the pipeline, eliminating argument mismatch risk in strict PHP runtimes.
+- **PHP placeholder robustness** — placeholders now use normalized uppercase kind names and restore includes case-insensitive recovery + orphan cleanup, reducing placeholder leaks in edge cases.
+
+### Changed
+- **Version sync across ecosystems** — aligned release version to **0.28.0** in Python (`pyproject.toml`, `texthumanize.__version__` fallback), PHP (`composer.json`, `php/composer.json`, `TextHumanize::VERSION`), and JS (`package.json`, `js/package.json`, `js/src/version.ts`).
+- **Installation docs synced** — updated stale install pins in main README and PHP README to current release line.
+- **Release verification hardening** — added `scripts/check_version_sync.py`, `scripts/release_smoke_test.py`, and new CI workflow `.github/workflows/release-verify.yml`; publish pipeline now also runs version-sync + smoke checks before upload.
+- **Packaging metadata cleanup** — switched `project.license` to SPDX-style string and removed deprecated license classifier warning source.
+
 ## [0.27.1] - 2026-03-04
 
 ### Fixed

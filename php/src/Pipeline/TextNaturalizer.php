@@ -195,7 +195,7 @@ class TextNaturalizer
         $lines = explode("\n", $text);
         $result = [];
         foreach ($lines as $line) {
-            if (trim($line) === '' || str_contains($line, "\x00THZ_")) {
+            if (trim($line) === '' || Segmenter::hasBlockingPlaceholder($line)) {
                 $result[] = $line;
             } else {
                 $result[] = $this->$method($line, $prob);

@@ -248,7 +248,7 @@ class SentenceSplitter
         $zones = [];
 
         // Placeholders from segmenter (\x00THZ_...\x00)
-        if (preg_match_all('/\x00THZ_[A-Z_]+_\d+\x00/', $text, $matches, PREG_OFFSET_CAPTURE)) {
+        if (preg_match_all('/\x00THZ_[A-Z_]+_\d+\x00/i', $text, $matches, PREG_OFFSET_CAPTURE)) {
             foreach ($matches[0] as $m) {
                 $zones[] = [$m[1], $m[1] + strlen($m[0])];
             }
