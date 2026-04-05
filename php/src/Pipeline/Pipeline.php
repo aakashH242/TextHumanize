@@ -126,7 +126,7 @@ class Pipeline
 
         // --- Stage 1: Segmentation ---
         $processed = self::runPlugins('segmentation', $processed, $lang, $options->profile, $options->intensity, true);
-        $segmenter = new Segmenter();
+        $segmenter = new Segmenter($options->preserve);
         $segmented = $segmenter->segment(
             $processed,
             $keepKeywords,

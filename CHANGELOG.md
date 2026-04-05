@@ -3,6 +3,18 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.28.1] - 2026-04-05
+
+### Fixed
+- **PHP preserve options respected in pipeline** — `Pipeline::run()` now initializes `Segmenter` with user `preserve` options, so flags like `preserve['html'] = false` are honored during processing.
+- **PHP HTML placeholder leak edge-case** — `SegmentedText::restore()` now recovers placeholders even when null-byte wrappers (`\x00`) were stripped by external normalizers, preventing `THZ_HTML_*` placeholders from leaking into final output.
+
+### Added
+- **Regression tests for HTML placeholder safety in PHP**:
+  - restore with null-byte-stripped placeholders
+  - pipeline behavior when `preserve['html'] = false`
+  - no leaked `THZ_HTML_*` markers in final processed output
+
 ## [0.28.0] - 2026-04-05
 
 ### Fixed

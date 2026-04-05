@@ -300,6 +300,51 @@ class TextHumanizeTest extends TestCase
         $this->assertStringContainsString('TextHumanize', $restored);
     }
 
+    public function testSegmenterRestoreHandlesNullByteStrippedPlaceholders(): void
+    {
+        $text = '<p>Furthermore, the implementation is comprehensive.</p>';
+        $segmenter = new Segmenter();
+        $seg = $segmenter->segment($text);
+
+        $mutated = str_replace("\x00", '', $seg->text);
+        $restored = $seg->restore($mutated);
+
+        $this->assertStringContainsString('<p>', $restored);
+        $this->assertStringContainsString('</p>', $restored);
+        $this->assertStringNotContainsString('THZ_HTML_', $restored);
+    }
+
+    public function testPipelineRespectsPreserveHtmlFalse(): void
+    {
+        $capturedBeforeRestore = null;
+        TextHumanize::registerPlugin(
+            function (string $text, string $lang, string $profile, int $intensity) use (&$capturedBeforeRestore): string {
+                $capturedBeforeRestore = $text;
+                return $text;
+            },
+            before: 'restore',
+        );
+
+        try {
+            $result = TextHumanize::humanize(
+                '<p>Furthermore, the implementation is comprehensive. Moreover, the system is robust.</p>',
+                lang: 'en',
+                profile: 'web',
+                intensity: 80,
+                preserve: ['html' => false],
+                seed: 42,
+            );
+        } finally {
+            TextHumanize::clearPlugins();
+        }
+
+        $this->assertIsString($capturedBeforeRestore);
+        $this->assertStringNotContainsString('THZ_HTML_', $capturedBeforeRestore);
+        $this->assertStringContainsString('<p>', $result->processed);
+        $this->assertStringContainsString('</p>', $result->processed);
+        $this->assertStringNotContainsString('THZ_HTML_', $result->processed);
+    }
+
     // ==================== Typography Normalizer ====================
 
     public function testTypographyNormalizeDashes(): void
@@ -390,7 +435,7 @@ class TextHumanizeTest extends TestCase
 
     public function testVersion(): void
     {
-        $this->assertSame('0.28.0', TextHumanize::VERSION);
+        $this->assertSame('0.28.1', TextHumanize::VERSION);
     }
 
     // ==================== Integration ====================
