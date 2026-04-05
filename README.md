@@ -71,7 +71,7 @@
 - [Security & Limits](#-security--limits)
 - [For Business & Enterprise](#-for-business--enterprise)
 - [FAQ & Troubleshooting](#-faq--troubleshooting)
-- [What's New in v0.28.1](#-whats-new-in-v0281)
+- [What's New in v0.28.2](#-whats-new-in-v0282)
 - [Contributing](#-contributing)
 - [Limitations](#-limitations)
 - [Support the Project](#-support-the-project)
@@ -187,7 +187,7 @@ git clone https://github.com/ksanyok/TextHumanize.git
 cd TextHumanize && pip install -e .
 ```
 
-> **Tip:** Pin your version for production: `pip install texthumanize==0.28.1`
+> **Tip:** Pin your version for production: `pip install texthumanize==0.28.2`
 
 <details>
 <summary><b>PHP / TypeScript</b></summary>
@@ -1334,7 +1334,7 @@ All benchmarks on Apple Silicon (M-series), Python 3.12, single thread, after wa
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  TextHumanize v0.28.1 — AI Score Benchmark              │
+│  TextHumanize v0.28.2 — AI Score Benchmark              │
 ├──────────────────────────────────────────────────────────┤
 │  EN (web/50):    94% → 27%    (reduction: -67pp)        │
 │  EN (web/60):    94% → 23%    (reduction: -71pp)        │
@@ -1680,12 +1680,13 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 
 ---
 
-## 🆕 What's New in v0.28.1
+## 🆕 What's New in v0.28.2
 
-### Patch fixes (0.28.1)
-- **PHP HTML placeholder stability** — placeholder restoration now also recovers markers when `\x00` wrappers were stripped by external text-normalization steps.
-- **PHP preserve-options correctness** — pipeline now passes user `preserve` options into `Segmenter`, so `preserve['html'] = false` and related preserve flags are actually respected.
-- **New regression tests** — added PHP tests that validate no `THZ_HTML_*` leakage in output and verify restore behavior for null-byte-stripped placeholders.
+### Patch fixes (0.28.2)
+- **PHP HTML wrapper compatibility** — internal orphan cleanup no longer strips external wrapper tokens like `THZ_APP_HTML_*`, preventing broken restore in client wrappers.
+- **HTML + keep_keywords flows now humanize properly** — `THZ_KEYWORD_*` / `THZ_BRAND_*` placeholders are treated as inline-safe, so structure/naturalization stages are not skipped.
+- **Connector replacement after protected tags** — connector rewrites now work even when a line starts with inline placeholders.
+- **Ukrainian naturalization hardening** — added dedicated `uk` replacements/boosters and removed English fallback for non-English naturalization to avoid mixed-language artifacts.
 
 ### Previous highlights (0.28.0)
 

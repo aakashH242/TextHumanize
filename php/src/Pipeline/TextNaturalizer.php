@@ -65,6 +65,18 @@ class TextNaturalizer
             'представляет' => ['это', 'выглядит как'],
             'существенный' => ['важный', 'серьёзный', 'большой'],
         ],
+        'uk' => [
+            'здійснювати' => ['робити', 'виконувати', 'проводити'],
+            'здійснюється' => ['відбувається', 'робиться'],
+            'забезпечує' => ['дає', 'створює', 'допомагає'],
+            'відповідний' => ['потрібний', 'належний'],
+            'значний' => ['помітний', 'чималий', 'великий'],
+            'суттєвий' => ['важливий', 'вагомий'],
+            'надзвичайно' => ['дуже', 'вкрай'],
+            'доцільно' => ['варто', 'має сенс'],
+            'важливо' => ['варто', 'слід'],
+            'функціонує' => ['працює', 'діє'],
+        ],
     ];
 
     // AI-characteristic phrases per language
@@ -98,6 +110,17 @@ class TextNaturalizer
             'что касается' => ['насчёт', 'по поводу', 'о'],
             'тот факт что' => ['то что', 'что'],
         ],
+        'uk' => [
+            'необхідно зазначити' => ['варто сказати', 'важливо'],
+            'слід зазначити' => ['варто сказати', 'зауважимо'],
+            'на сьогоднішній день' => ['сьогодні', 'зараз'],
+            'у сучасному світі' => ['сьогодні', 'нині'],
+            'у кінцевому підсумку' => ['у підсумку', 'зрештою'],
+            'у зв\'язку з тим, що' => ['тому що', 'оскільки'],
+            'відіграє ключову роль' => ['є важливим', 'має велике значення'],
+            'перш за все' => ['насамперед', 'спочатку'],
+            'таким чином' => ['отже', 'тому'],
+        ],
     ];
 
     // Perplexity boosters per language
@@ -126,6 +149,24 @@ class TextNaturalizer
             'fragments' => ['Не всегда.', 'Трудно сказать.', 'Верно.',
                 'Логично.', 'Зависит от ситуации.'],
         ],
+        'uk' => [
+            'hedges' => ['мабуть', 'думаю', 'схоже', 'ймовірно', 'можливо',
+                'певною мірою', 'здається'],
+            'discourse_markers' => ['ну', 'до речі', 'власне', 'чесно кажучи',
+                'якщо коротко', 'зрештою'],
+            'parenthetical' => ['(хоча не завжди)', '(принаймні в теорії)',
+                '(якщо чесно)', '(по суті)'],
+            'rhetorical_questions' => ['А чому це важливо?',
+                'І що це нам дає?', 'Але чи все так просто?'],
+            'fragments' => ['Не завжди.', 'Складно сказати.', 'Логічно.',
+                'Залежить від ситуації.'],
+        ],
+    ];
+
+    private const BURSTINESS_JOIN_CONJUNCTION = [
+        'en' => 'and',
+        'ru' => 'и',
+        'uk' => 'і',
     ];
 
     // English contractions
@@ -209,7 +250,7 @@ class TextNaturalizer
      */
     private function replaceAiPhrases(string $text, float $prob): string
     {
-        $phrases = self::AI_PHRASE_PATTERNS[$this->lang] ?? self::AI_PHRASE_PATTERNS['en'] ?? [];
+        $phrases = self::AI_PHRASE_PATTERNS[$this->lang] ?? [];
 
         foreach ($phrases as $phrase => $replacements) {
             if (!Profiles::coinFlip($prob, $this->rng)) {
@@ -237,7 +278,7 @@ class TextNaturalizer
      */
     private function replaceAiWords(string $text, float $prob): string
     {
-        $words = self::AI_WORD_REPLACEMENTS[$this->lang] ?? self::AI_WORD_REPLACEMENTS['en'] ?? [];
+        $words = self::AI_WORD_REPLACEMENTS[$this->lang] ?? [];
         $wordCount = count(preg_split('/\s+/', trim($text)));
         $maxReplacements = max(5, intdiv($wordCount, 20));
         $replaced = 0;
@@ -322,6 +363,7 @@ class TextNaturalizer
         // Join short sentences
         $joined = [];
         $i = 0;
+        $joinConjunction = self::BURSTINESS_JOIN_CONJUNCTION[$this->lang] ?? 'and';
         while ($i < count($result)) {
             $wc = count(preg_split('/\s+/', trim($result[$i])));
             if ($wc <= 6 && $i + 1 < count($result)
@@ -331,7 +373,7 @@ class TextNaturalizer
                 $first = preg_replace('/[.!?]+$/', '', trim($result[$i]));
                 $second = $result[$i + 1];
                 $second = mb_strtolower(mb_substr($second, 0, 1)) . mb_substr($second, 1);
-                $joined[] = "$first, and $second";
+                $joined[] = "$first, $joinConjunction $second";
                 $this->changes[] = ['type' => 'naturalize_burstiness_join'];
                 $changed = true;
                 $i += 2;
@@ -426,7 +468,7 @@ class TextNaturalizer
             return $text;
         }
 
-        $boosters = self::PERPLEXITY_BOOSTERS[$this->lang] ?? self::PERPLEXITY_BOOSTERS['en'] ?? [];
+        $boosters = self::PERPLEXITY_BOOSTERS[$this->lang] ?? [];
         if (empty($boosters)) {
             return $text;
         }

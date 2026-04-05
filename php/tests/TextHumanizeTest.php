@@ -314,6 +314,17 @@ class TextHumanizeTest extends TestCase
         $this->assertStringNotContainsString('THZ_HTML_', $restored);
     }
 
+    public function testSegmenterRestoreKeepsExternalThzTokens(): void
+    {
+        $segmenter = new Segmenter();
+        $seg = $segmenter->segment('No placeholders here.');
+
+        $external = '@@THZ_APP_HTML_13@@';
+        $restored = $seg->restore($external);
+
+        $this->assertSame($external, $restored);
+    }
+
     public function testPipelineRespectsPreserveHtmlFalse(): void
     {
         $capturedBeforeRestore = null;
@@ -435,7 +446,7 @@ class TextHumanizeTest extends TestCase
 
     public function testVersion(): void
     {
-        $this->assertSame('0.28.1', TextHumanize::VERSION);
+        $this->assertSame('0.28.2', TextHumanize::VERSION);
     }
 
     // ==================== Integration ====================

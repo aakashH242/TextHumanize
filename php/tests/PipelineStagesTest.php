@@ -150,6 +150,18 @@ class PipelineStagesTest extends TestCase
         $this->assertFalse(Segmenter::hasBlockingPlaceholder($line));
     }
 
+    public function testSegmenterKeywordPlaceholdersAreNonBlocking(): void
+    {
+        $line = "\x00THZ_KEYWORD_1\x00Text\x00THZ_KEYWORD_2\x00";
+        $this->assertFalse(Segmenter::hasBlockingPlaceholder($line));
+    }
+
+    public function testSegmenterBrandPlaceholdersAreNonBlocking(): void
+    {
+        $line = "\x00THZ_BRAND_1\x00Text\x00THZ_BRAND_2\x00";
+        $this->assertFalse(Segmenter::hasBlockingPlaceholder($line));
+    }
+
     public function testSegmenterUrlPlaceholderIsBlocking(): void
     {
         $line = "Open \x00THZ_URL_1\x00 now";
@@ -173,6 +185,30 @@ class PipelineStagesTest extends TestCase
 
         $this->assertStringContainsString('<p>', $restored);
         $this->assertStringContainsString('</p>', $restored);
+    }
+
+    public function testStructureDiversifierReplacesConnectorAfterInlinePlaceholder(): void
+    {
+        $diversifier = new StructureDiversifier();
+        $ref = new \ReflectionClass($diversifier);
+
+        $langPackProp = $ref->getProperty('langPack');
+        $langPackProp->setAccessible(true);
+        $langPackProp->setValue($diversifier, Registry::get('uk'));
+
+        $rngProp = $ref->getProperty('rng');
+        $rngProp->setAccessible(true);
+        $rngProp->setValue($diversifier, new RandomHelper(42));
+
+        $method = $ref->getMethod('replaceAiConnectors');
+        $method->setAccessible(true);
+
+        $input = "\x00THZ_KEYWORD_1\x00Таким чином, система працює.";
+        $output = $method->invoke($diversifier, $input, 1.0);
+
+        $this->assertNotSame($input, $output);
+        $this->assertStringContainsString("\x00THZ_KEYWORD_1\x00", $output);
+        $this->assertStringNotContainsString('Таким чином', $output);
     }
 
     // ==================== TextNaturalizer ====================
@@ -242,6 +278,30 @@ class PipelineStagesTest extends TestCase
         $text = 'Необходимо отметить что система обеспечивает надлежащее функционирование.';
         $result = $naturalizer->process($text, 'ru', $profile, 60, $rng);
         $this->assertNotEmpty($result);
+    }
+
+    public function testTextNaturalizerUsesUkrainianJoinConjunction(): void
+    {
+        $naturalizer = new TextNaturalizer();
+        $profile = Profiles::get('web');
+        $rng = new RandomHelper(42);
+
+        $text = 'Це простий тест. Це друге речення. Це третє речення. Це четверте речення.';
+        $result = $naturalizer->process($text, 'uk', $profile, 100, $rng);
+
+        $this->assertStringNotContainsString(', and ', $result);
+    }
+
+    public function testTextNaturalizerDoesNotFallbackToEnglishForUkrainian(): void
+    {
+        $naturalizer = new TextNaturalizer();
+        $profile = Profiles::get('web');
+        $rng = new RandomHelper(42);
+
+        $text = 'In today\'s world, comprehensive coverage matters.';
+        $result = $naturalizer->process($text, 'uk', $profile, 100, $rng);
+
+        $this->assertSame($text, $result);
     }
 
     // ==================== LivelinessInjector ====================

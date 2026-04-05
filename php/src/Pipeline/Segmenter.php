@@ -54,8 +54,14 @@ class SegmentedText
             $processedText = preg_replace($pattern, $seg->original, $processedText) ?? $processedText;
         }
 
-        // Pass 3: strip orphaned placeholders/null bytes.
-        $processedText = preg_replace('/(?:\x00)?THZ_[A-Z_]+_\d+(?:\x00)?/iu', '', $processedText) ?? $processedText;
+        // Pass 3: strip orphaned internal placeholders/null bytes.
+        // External wrappers may use THZ_* tokens too, so only remove kinds
+        // that are produced by this Segmenter.
+        $processedText = preg_replace(
+            Segmenter::internalPlaceholderCleanupPattern(),
+            '',
+            $processedText,
+        ) ?? $processedText;
         $processedText = str_replace("\x00", '', $processedText);
 
         return $processedText;
@@ -67,7 +73,20 @@ class SegmentedText
  */
 class Segmenter
 {
-    private const INLINE_SAFE_PLACEHOLDER_KINDS = ['HTML'];
+    private const INLINE_SAFE_PLACEHOLDER_KINDS = ['HTML', 'KEYWORD', 'BRAND'];
+    private const INTERNAL_PLACEHOLDER_KINDS = [
+        'CODE_BLOCK',
+        'INLINE_CODE',
+        'MD_IMAGE',
+        'MD_LINK',
+        'URL',
+        'EMAIL',
+        'HTML',
+        'HASHTAG',
+        'MENTION',
+        'BRAND',
+        'KEYWORD',
+    ];
 
     private array $preserve;
     private int $counter = 0;
@@ -202,5 +221,23 @@ class Segmenter
         }
 
         return false;
+    }
+
+    /**
+     * Cleanup pattern for orphaned placeholders that are generated internally.
+     */
+    public static function internalPlaceholderCleanupPattern(): string
+    {
+        static $pattern = null;
+
+        if ($pattern === null) {
+            $kinds = implode('|', array_map(
+                static fn(string $kind): string => preg_quote($kind, '/'),
+                self::INTERNAL_PLACEHOLDER_KINDS,
+            ));
+            $pattern = '/(?:\x00)?THZ_(?:' . $kinds . ')_\d+(?:\x00)?/iu';
+        }
+
+        return $pattern;
     }
 }

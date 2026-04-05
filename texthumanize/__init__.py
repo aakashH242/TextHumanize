@@ -40,11 +40,14 @@ import sys as _sys
 import types as _types
 from typing import Any
 
+__version__ = "0.28.2"
 try:
     from importlib.metadata import version as _meta_version
-    __version__ = _meta_version("texthumanize")
+    _dist_version = _meta_version("texthumanize")
+    if _dist_version == __version__:
+        __version__ = _dist_version
 except Exception:
-    __version__ = "0.28.1"
+    pass
 __author__ = "TextHumanize Contributors"
 __license__ = "Personal Use Only"
 

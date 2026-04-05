@@ -3,6 +3,21 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.28.2] - 2026-04-05
+
+### Fixed
+- **PHP HTML wrapper compatibility hardening** — `SegmentedText::restore()` now removes only internal orphan placeholders. External wrapper tokens like `THZ_APP_HTML_*` are preserved and can be restored correctly by client-side wrappers.
+- **PHP stage skipping on preserved HTML wrappers** — `THZ_KEYWORD_*` and `THZ_BRAND_*` placeholders are now treated as inline-safe, so paragraph-level humanization stages are no longer skipped for wrapper-based HTML flows.
+- **Connector replacement with inline placeholders** — `StructureDiversifier` now detects sentence-start connectors even when inline-safe placeholders appear before text (common with protected HTML tags).
+- **Cross-language naturalization artifacts** — `TextNaturalizer` no longer falls back to English dictionaries for non-English languages; added dedicated Ukrainian naturalizer dictionaries/boosters and language-correct burstiness join conjunction.
+
+### Added
+- **New PHP regression tests** for:
+  - non-blocking `KEYWORD`/`BRAND` placeholders
+  - connector replacement when text starts with inline placeholder
+  - Ukrainian naturalizer anti-fallback behavior
+  - preserving external `THZ_*` wrapper tokens during restore
+
 ## [0.28.1] - 2026-04-05
 
 ### Fixed

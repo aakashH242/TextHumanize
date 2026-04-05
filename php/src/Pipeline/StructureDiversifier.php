@@ -95,11 +95,18 @@ class StructureDiversifier
                 continue;
             }
 
-            // Try sentence-start pattern first
-            $pattern = '/(?<=^|[.!?]\s)' . preg_quote($connector, '/') . '\b/um';
+            // Sentence-start pattern with optional inline-safe placeholders
+            // between the boundary and connector (e.g. protected HTML tags).
+            $safePrefix = '(?:\x00THZ_(?:HTML|KEYWORD|BRAND)_\d+\x00\s*)*';
+            $pattern = '/(^|[.!?]\s+)(\s*' . $safePrefix . ')' . preg_quote($connector, '/') . '\b/um';
             if (preg_match($pattern, $text)) {
                 $replacement = $this->rng->choice($alternatives);
-                $text = preg_replace($pattern, $replacement, $text, 1);
+                $text = preg_replace_callback(
+                    $pattern,
+                    static fn(array $m): string => $m[1] . $m[2] . $replacement,
+                    $text,
+                    1,
+                ) ?? $text;
                 $this->changes[] = [
                     'type' => 'structure_connector',
                     'from' => $connector,
