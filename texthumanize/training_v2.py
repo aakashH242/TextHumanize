@@ -135,9 +135,9 @@ class NumpyMLP:
             if act == "relu":
                 x = np.maximum(x, 0)
             elif act == "sigmoid":
-                x = 1.0 / (1.0 + np.exp(-np.clip(x, -88, 88)))
+                x = (1.0 / (1.0 + np.exp(-np.clip(x, -88, 88)))).astype(np.float32)
             elif act == "tanh":
-                x = np.tanh(x)
+                x = np.tanh(x).astype(np.float32)
             # "linear" — no activation
             cache.append(x.copy())
         return x, cache
