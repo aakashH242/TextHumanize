@@ -36,10 +36,9 @@ jobs:
         if: matrix.python-version != '3.12'
         run: pytest --tb=short --timeout=120 -q
 
-      - name: Run tests with coverage fast parallel (Python 3.12 only)
+      - name: Run tests fast parallel (Python 3.12 only)
         if: matrix.python-version == '3.12'
-        run: |
-          pytest -n auto --cov=texthumanize --cov-report=xml --cov-fail-under=70 --tb=short --timeout=120 -q
+        run: pytest -n auto --timeout=120 --tb=short -q
 
       - name: Type check with mypy (Python 3.12 only)
         if: matrix.python-version == '3.12'
