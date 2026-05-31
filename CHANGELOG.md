@@ -3,6 +3,24 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.28.4] - 2026-06-01
+
+### Added
+- **Explainable AI audit** — added `detect_ai_explain()` with metric contributions, highlighted spans, sentence-level reports, mixed-content shares, calibration, confidence intervals, and suggested actions.
+- **Unified watermark forensics** — added `watermark_report()`, `watermark_report_batch()`, `clean_safe()`, and `neutralise_aggressive()` for Unicode, homoglyph, invisible-character, and statistical watermark risk reporting.
+- **Promopilot-ready audit API** — added `audit_report()` plus CLI/reporting paths for AI and watermark audit flows.
+- **Strict and minimal humanization controls** — added `quality_gate="strict"`, `minimal=True`, `--minimal`, `--only-flagged`, and intent aliases for `seo_article`, `landing_page`, `product_description`, `support_reply`, `academic`, `legal`, and `social_post`.
+- **Humanize explain metadata** — `humanize()` now returns lightweight `metrics_after["humanize_explain"]` with top change reasons, remaining risks, sentence report, score delta, and quality summary.
+- **Short commercial copy golden set** — added regression coverage for landing, product, and support-copy flows used by Promopilot-style integrations.
+
+### Changed
+- **GitHub CI stability** — Python 3.12 now uses one parallel test run and keeps coverage as a local release check, avoiding hosted-runner coverage hangs while preserving full matrix validation.
+- **Release verification baseline** — local release checks now include full pytest (`2105 passed`), `mypy`, `ruff`, version sync, and coverage (`80.09%`).
+
+### Fixed
+- **NumPy dtype stability in training v2** — `NumpyMLP.forward()` preserves `float32` for sigmoid/tanh activations, fixing Python 3.12 `mypy` failures in CI.
+- **Neural inference warnings** — stabilized NumPy matmul paths in neural engine/LM code and covered the cleanup with regression tests.
+
 ## [0.28.3] - 2026-05-31
 
 ### Added

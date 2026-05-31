@@ -71,7 +71,7 @@
 - [Security & Limits](#-security--limits)
 - [For Business & Enterprise](#-for-business--enterprise)
 - [FAQ & Troubleshooting](#-faq--troubleshooting)
-- [What's New in v0.28.3](#-whats-new-in-v0283)
+- [What's New in v0.28.4](#-whats-new-in-v0284)
 - [Contributing](#-contributing)
 - [Limitations](#-limitations)
 - [Support the Project](#-support-the-project)
@@ -187,7 +187,7 @@ git clone https://github.com/ksanyok/TextHumanize.git
 cd TextHumanize && pip install -e .
 ```
 
-> **Tip:** Pin your version for production: `pip install texthumanize==0.28.3`
+> **Tip:** Pin your version for production: `pip install texthumanize==0.28.4`
 
 <details>
 <summary><b>PHP / TypeScript</b></summary>
@@ -1358,7 +1358,7 @@ All benchmarks on Apple Silicon (M-series), Python 3.12, single thread, after wa
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  TextHumanize v0.28.3 — AI Score Benchmark              │
+│  TextHumanize v0.28.4 — AI Score Benchmark              │
 ├──────────────────────────────────────────────────────────┤
 │  EN (web/50):    94% → 27%    (reduction: -67pp)        │
 │  EN (web/60):    94% → 23%    (reduction: -71pp)        │
@@ -1704,9 +1704,17 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 
 ---
 
-## 🆕 What's New in v0.28.3
+## 🆕 What's New in v0.28.4
 
-### Release readiness (0.28.3)
+### Explainable audit and safer humanization (0.28.4)
+- **Explainable AI detector reports** — `detect_ai_explain()` returns calibrated score, confidence interval, metric contributions, highlighted spans, sentence report, mixed-content shares, and suggested actions.
+- **Unified watermark forensics** — `watermark_report()` covers invisible Unicode, homoglyphs, fullwidth/math lookalikes, and statistical watermark hypotheses with p-value/z-score evidence.
+- **Promopilot-ready audit JSON** — `audit_report()` combines AI and watermark findings in a stable schema for product integrations and batch workflows.
+- **Stricter quality controls** — `quality_gate="strict"` can reject risky rewrites, while `minimal=True` / `--only-flagged` changes only flagged fragments.
+- **Better short commercial copy coverage** — golden-set regression tests now cover landing, product, and support copy patterns.
+- **CI and release hardening** — GitHub CI is green across Python 3.9-3.13, PHP 8.1-8.3, TypeScript/JavaScript, and docs; local release coverage is 80.09%.
+
+### Previous release readiness (0.28.3)
 - **GitHub community checklist completed** — added Code of Conduct, Security Policy, issue templates, quality-report template, and pull request template.
 - **Release metadata sync** — Python, PHP, and TypeScript package versions are aligned for PyPI, Packagist, and source installs.
 - **Safer release verification** — version checks now validate package manifests plus README/CHANGELOG release references before publication.
