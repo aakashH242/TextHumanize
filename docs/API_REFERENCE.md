@@ -656,6 +656,15 @@ Zero-dependency HTTP server with CORS support.
 python -m texthumanize.api --port 8080
 ```
 
+Production FastAPI example:
+
+```bash
+uvicorn examples.fastapi_integration:app --host 0.0.0.0 --port 8000
+```
+
+The example adds request/body limits, per-request timeouts, structured error
+JSON with request ids, and `/v1/humanize/batch`.
+
 | Method | Endpoint | Description |
 |:-------|:---------|:------------|
 | `POST` | `/humanize` | Humanize text |

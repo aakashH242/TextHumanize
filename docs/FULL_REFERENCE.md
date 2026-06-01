@@ -1347,6 +1347,17 @@ python -m texthumanize.api --port 8080
 texthumanize dummy --api --port 8080
 ```
 
+Production FastAPI wrapper:
+
+```bash
+pip install texthumanize fastapi uvicorn
+uvicorn examples.fastapi_integration:app --host 0.0.0.0 --port 8000
+```
+
+The FastAPI example includes request body limits, text and batch size limits,
+per-request timeouts, stable structured error JSON with request ids, and a
+`POST /v1/humanize/batch` endpoint for bulk workflows.
+
 ### Endpoints
 
 All `POST` endpoints accept JSON body with `{"text": "..."}` and return JSON.

@@ -1265,6 +1265,10 @@ Zero-dependency HTTP server with rate limiting and CORS:
 python -m texthumanize.api --port 8080
 ```
 
+For FastAPI deployments, see `examples/fastapi_integration.py`. It includes
+request body limits, text and batch size limits, per-request timeouts,
+structured error envelopes with request ids, and `/v1/humanize/batch`.
+
 ### Endpoints
 
 | Method | Endpoint | Description |
