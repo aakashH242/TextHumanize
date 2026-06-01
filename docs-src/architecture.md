@@ -7,7 +7,7 @@ texthumanize/                    # 94 Python modules, 58,000+ lines
 ├── core.py                      # Facade: humanize(), analyze(), detect_ai()
 ├── async_api.py                 # Async wrappers: async_humanize(), async_detect_ai()
 ├── pipeline.py                  # 20-stage pipeline + adaptive intensity
-├── api.py                       # REST API server (12+ endpoints + SSE)
+├── api.py                       # REST API server (OpenAPI + SSE)
 ├── cli.py                       # CLI (15+ commands)
 ├── exceptions.py                # Exception hierarchy
 │

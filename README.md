@@ -423,7 +423,7 @@ AI score: 75% → 17%  (reduction: 58 percentage points)
 | | Neural network training loop | ✅ | — | — |
 | | Dashboard (HTML reports) | ✅ | — | — |
 | | Plugin system | ✅ | — | ✅ |
-| | REST API (16 endpoints) | ✅ | — | — |
+| | REST API (OpenAPI + SSE) | ✅ | — | — |
 | | SSE streaming | ✅ | — | — |
 | | CLI (15+ commands) | ✅ | — | — |
 | **Languages** | Full dictionary support | 14 | 2 | 14 |
@@ -462,7 +462,7 @@ AI score: 75% → 17%  (reduction: 58 percentage points)
 | Platforms | Python + JS + PHP | Single |
 | Plugin system | ✅ | ❌ |
 | Tone analysis | ✅ 7 levels | ❌ |
-| REST API | ✅ 16 endpoints + SSE | ❌ |
+| REST API | ✅ OpenAPI + SSE | ❌ |
 | Readability metrics | ✅ 6 indices | 0–1 |
 | Morphological engine | ✅ 4 languages | ❌ |
 | Neural components | MLP + LSTM + HMM | ❌ |
@@ -1269,6 +1269,9 @@ For FastAPI deployments, see `examples/fastapi_integration.py`. It includes
 request body limits, text and batch size limits, per-request timeouts,
 structured error envelopes with request ids, and `/v1/humanize/batch`.
 
+OpenAPI 3.1 schema is available at `GET /openapi.json` for client generation,
+contract tests, and API gateway import.
+
 ### Endpoints
 
 | Method | Endpoint | Description |
@@ -1287,6 +1290,7 @@ structured error envelopes with request ids, and `/v1/humanize/batch`.
 | `POST` | `/readability` | Readability metrics |
 | `POST` | `/sse/humanize` | SSE streaming humanization |
 | `GET` | `/health` | Health check |
+| `GET` | `/openapi.json` | OpenAPI 3.1 schema |
 | `GET` | `/` | API documentation index |
 | `OPTIONS` | `*` | CORS preflight |
 
@@ -1413,7 +1417,7 @@ texthumanize/                        # 122 Python modules, 235,000+ lines
 ├── pipeline.py                      # 38-stage pipeline + adaptive intensity (1,553 lines)
 ├── sentence_validator.py            # SentenceValidator™: interstage quality gate (350 lines)
 ├── phantom.py                       # PHANTOM™: gradient-guided adversarial engine (2,943 lines)
-├── api.py                           # REST API server, 16 endpoints (396 lines)
+├── api.py                           # REST API server, OpenAPI + SSE
 ├── async_api.py                     # Async wrappers for all functions (200 lines)
 ├── cli.py                           # CLI (15+ commands) (1,492 lines)
 ├── exceptions.py                    # Exception hierarchy (77 lines)

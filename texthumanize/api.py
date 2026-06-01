@@ -14,6 +14,7 @@
     POST /coherence      — анализ когерентности
     POST /readability    — полная читабельность
     GET  /health         — проверка работоспособности
+    GET  /openapi.json   — OpenAPI 3.1 schema
 
 Запуск:
     python -m texthumanize.api --port 8080
@@ -235,6 +236,411 @@ ROUTES: dict[str, Any] = {
     "/readability": _handle_readability,
 }
 
+OPENAPI_JSON_PATH = "/openapi.json"
+PUBLIC_ENDPOINTS = sorted([*ROUTES.keys(), "/sse/humanize"])
+
+
+def _schema_ref(name: str) -> dict[str, str]:
+    return {"$ref": f"#/components/schemas/{name}"}
+
+
+def _json_request(schema_name: str, *, required: bool = True) -> dict[str, Any]:
+    return {
+        "required": required,
+        "content": {
+            "application/json": {
+                "schema": _schema_ref(schema_name),
+            },
+        },
+    }
+
+
+def _json_response_schema(
+    schema_name: str,
+    description: str = "Successful response",
+) -> dict[str, Any]:
+    return {
+        "description": description,
+        "content": {
+            "application/json": {
+                "schema": _schema_ref(schema_name),
+            },
+        },
+    }
+
+
+def get_openapi_schema(server_url: str = "http://localhost:8080") -> dict[str, Any]:
+    """Return an OpenAPI 3.1 schema for the stdlib REST API."""
+    paths: dict[str, Any] = {
+        "/": {
+            "get": {
+                "summary": "API index",
+                "operationId": "getApiIndex",
+                "responses": {
+                    "200": _json_response_schema("ApiIndexResponse"),
+                },
+            },
+        },
+        "/health": {
+            "get": {
+                "summary": "Health check",
+                "operationId": "getHealth",
+                "responses": {
+                    "200": _json_response_schema("HealthResponse"),
+                },
+            },
+        },
+        OPENAPI_JSON_PATH: {
+            "get": {
+                "summary": "OpenAPI schema",
+                "operationId": "getOpenApiSchema",
+                "responses": {
+                    "200": {
+                        "description": "OpenAPI 3.1 schema",
+                        "content": {
+                            "application/json": {
+                                "schema": {"type": "object"},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        "/humanize": {
+            "post": {
+                "summary": "Humanize text",
+                "operationId": "humanizeText",
+                "requestBody": _json_request("HumanizeRequest"),
+                "responses": {
+                    "200": _json_response_schema("HumanizeResponse"),
+                    "400": _json_response_schema("ErrorResponse", "Bad request"),
+                    "429": _json_response_schema("ErrorResponse", "Rate limited"),
+                    "500": _json_response_schema("ErrorResponse", "Server error"),
+                },
+            },
+        },
+        "/analyze": {
+            "post": {
+                "summary": "Analyze text metrics",
+                "operationId": "analyzeText",
+                "requestBody": _json_request("TextRequest"),
+                "responses": {"200": _json_response_schema("AnalyzeResponse")},
+            },
+        },
+        "/detect-ai": {
+            "post": {
+                "summary": "Detect AI-generated text",
+                "operationId": "detectAi",
+                "requestBody": _json_request("DetectAIRequest"),
+                "responses": {"200": _json_response_schema("GenericObject")},
+            },
+        },
+        "/paraphrase": {
+            "post": {
+                "summary": "Paraphrase text",
+                "operationId": "paraphraseText",
+                "requestBody": _json_request("ParaphraseRequest"),
+                "responses": {"200": _json_response_schema("TextResponse")},
+            },
+        },
+        "/tone/analyze": {
+            "post": {
+                "summary": "Analyze tone",
+                "operationId": "analyzeTone",
+                "requestBody": _json_request("TextRequest"),
+                "responses": {"200": _json_response_schema("GenericObject")},
+            },
+        },
+        "/tone/adjust": {
+            "post": {
+                "summary": "Adjust tone",
+                "operationId": "adjustTone",
+                "requestBody": _json_request("ToneAdjustRequest"),
+                "responses": {"200": _json_response_schema("TextResponse")},
+            },
+        },
+        "/watermarks/detect": {
+            "post": {
+                "summary": "Detect watermark signatures",
+                "operationId": "detectWatermarks",
+                "requestBody": _json_request("TextRequest"),
+                "responses": {"200": _json_response_schema("GenericObject")},
+            },
+        },
+        "/watermarks/clean": {
+            "post": {
+                "summary": "Remove watermark signatures",
+                "operationId": "cleanWatermarks",
+                "requestBody": _json_request("TextRequest"),
+                "responses": {"200": _json_response_schema("TextResponse")},
+            },
+        },
+        "/spin": {
+            "post": {
+                "summary": "Spin text or generate variants",
+                "operationId": "spinText",
+                "requestBody": _json_request("SpinRequest"),
+                "responses": {
+                    "200": {
+                        "description": "Single spin or variants response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        _schema_ref("TextResponse"),
+                                        _schema_ref("VariantsResponse"),
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        "/spin/variants": {
+            "post": {
+                "summary": "Generate spin variants",
+                "operationId": "spinVariants",
+                "requestBody": _json_request("SpinRequest"),
+                "responses": {"200": _json_response_schema("VariantsResponse")},
+            },
+        },
+        "/coherence": {
+            "post": {
+                "summary": "Analyze coherence",
+                "operationId": "analyzeCoherence",
+                "requestBody": _json_request("TextRequest"),
+                "responses": {"200": _json_response_schema("GenericObject")},
+            },
+        },
+        "/readability": {
+            "post": {
+                "summary": "Analyze readability",
+                "operationId": "analyzeReadability",
+                "requestBody": _json_request("TextRequest"),
+                "responses": {"200": _json_response_schema("GenericObject")},
+            },
+        },
+        "/sse/humanize": {
+            "post": {
+                "summary": "Stream humanized chunks with Server-Sent Events",
+                "operationId": "streamHumanize",
+                "requestBody": _json_request("HumanizeRequest"),
+                "responses": {
+                    "200": {
+                        "description": "text/event-stream response",
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {"type": "string"},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    return {
+        "openapi": "3.1.0",
+        "info": {
+            "title": "TextHumanize REST API",
+            "version": __version__,
+            "description": (
+                "Zero-dependency JSON API for text humanization, AI detection, "
+                "watermark analysis, tone tools, spinning, coherence, and readability."
+            ),
+        },
+        "servers": [{"url": server_url}],
+        "paths": paths,
+        "components": {
+            "schemas": {
+                "TextRequest": {
+                    "type": "object",
+                    "required": ["text"],
+                    "properties": {
+                        "text": {"type": "string", "minLength": 1},
+                        "lang": {"type": "string", "default": "auto"},
+                    },
+                    "additionalProperties": True,
+                },
+                "HumanizeRequest": {
+                    "allOf": [
+                        _schema_ref("TextRequest"),
+                        {
+                            "type": "object",
+                            "properties": {
+                                "profile": {"type": "string", "default": "web"},
+                                "intensity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100,
+                                    "default": 60,
+                                },
+                                "seed": {"type": ["integer", "null"]},
+                                "backend": {"type": "string", "default": "local"},
+                                "openai_api_key": {"type": "string"},
+                                "openai_model": {"type": "string"},
+                                "oss_api_url": {"type": "string"},
+                            },
+                        },
+                    ],
+                },
+                "DetectAIRequest": {
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string", "minLength": 1},
+                        "texts": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 1,
+                        },
+                        "lang": {"type": "string", "default": "auto"},
+                    },
+                    "anyOf": [
+                        {"required": ["text"]},
+                        {"required": ["texts"]},
+                    ],
+                },
+                "ParaphraseRequest": {
+                    "allOf": [
+                        _schema_ref("TextRequest"),
+                        {
+                            "type": "object",
+                            "properties": {
+                                "intensity": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1,
+                                    "default": 0.5,
+                                },
+                                "seed": {"type": ["integer", "null"]},
+                            },
+                        },
+                    ],
+                },
+                "ToneAdjustRequest": {
+                    "allOf": [
+                        _schema_ref("TextRequest"),
+                        {
+                            "type": "object",
+                            "properties": {
+                                "target": {"type": "string", "default": "neutral"},
+                                "intensity": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1,
+                                    "default": 0.5,
+                                },
+                            },
+                        },
+                    ],
+                },
+                "SpinRequest": {
+                    "allOf": [
+                        _schema_ref("TextRequest"),
+                        {
+                            "type": "object",
+                            "properties": {
+                                "intensity": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1,
+                                    "default": 0.5,
+                                },
+                                "seed": {"type": ["integer", "null"]},
+                                "count": {"type": "integer", "minimum": 1},
+                            },
+                        },
+                    ],
+                },
+                "HumanizeResponse": {
+                    "type": "object",
+                    "required": ["text", "lang", "profile", "change_ratio", "changes_count"],
+                    "properties": {
+                        "text": {"type": "string"},
+                        "lang": {"type": "string"},
+                        "profile": {"type": "string"},
+                        "change_ratio": {"type": "number"},
+                        "changes_count": {"type": "integer"},
+                        "_elapsed_ms": {"type": "number"},
+                    },
+                },
+                "AnalyzeResponse": {
+                    "type": "object",
+                    "properties": {
+                        "lang": {"type": "string"},
+                        "total_words": {"type": "integer"},
+                        "total_sentences": {"type": "integer"},
+                        "avg_sentence_length": {"type": "number"},
+                        "burstiness_score": {"type": "number"},
+                        "artificiality_score": {"type": "number"},
+                        "flesch_kincaid_grade": {"type": "number"},
+                        "coleman_liau_index": {"type": "number"},
+                        "_elapsed_ms": {"type": "number"},
+                    },
+                },
+                "TextResponse": {
+                    "type": "object",
+                    "required": ["text"],
+                    "properties": {
+                        "text": {"type": "string"},
+                        "_elapsed_ms": {"type": "number"},
+                    },
+                },
+                "VariantsResponse": {
+                    "type": "object",
+                    "required": ["variants", "count"],
+                    "properties": {
+                        "variants": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "count": {"type": "integer"},
+                        "_elapsed_ms": {"type": "number"},
+                    },
+                },
+                "HealthResponse": {
+                    "type": "object",
+                    "required": ["status", "version", "endpoints"],
+                    "properties": {
+                        "status": {"type": "string", "const": "ok"},
+                        "version": {"type": "string"},
+                        "endpoints": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "openapi": {"type": "string"},
+                    },
+                },
+                "ApiIndexResponse": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "version": {"type": "string"},
+                        "docs": {"type": "string"},
+                        "endpoints": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "openapi": {"type": "string"},
+                    },
+                },
+                "ErrorResponse": {
+                    "type": "object",
+                    "required": ["error"],
+                    "properties": {
+                        "error": {"type": "string"},
+                        "type": {"type": "string"},
+                    },
+                },
+                "GenericObject": {
+                    "type": "object",
+                    "additionalProperties": True,
+                },
+            },
+        },
+    }
+
 # ─── Request Handler ─────────────────────────────────────────
 
 class TextHumanizeHandler(BaseHTTPRequestHandler):
@@ -261,15 +667,19 @@ class TextHumanizeHandler(BaseHTTPRequestHandler):
             _json_response(self, {
                 "status": "ok",
                 "version": __version__,
-                "endpoints": sorted(ROUTES.keys()),
+                "endpoints": PUBLIC_ENDPOINTS,
+                "openapi": OPENAPI_JSON_PATH,
             })
         elif self.path == "/":
             _json_response(self, {
                 "name": "TextHumanize API",
                 "version": __version__,
                 "docs": "POST JSON to any endpoint with {'text': '...'} body",
-                "endpoints": sorted(ROUTES.keys()),
+                "endpoints": PUBLIC_ENDPOINTS,
+                "openapi": OPENAPI_JSON_PATH,
             })
+        elif self.path == OPENAPI_JSON_PATH:
+            _json_response(self, get_openapi_schema())
         else:
             _json_response(self, {"error": "Not Found"}, status=404)
 

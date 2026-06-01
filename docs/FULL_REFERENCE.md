@@ -184,7 +184,7 @@ It normalizes typography, simplifies bureaucratic language, diversifies sentence
 | **Advanced** | Style presets (5 personas) | ✅ | — | — |
 | | Auto-Tuner (feedback loop) | ✅ | — | — |
 | | Plugin system | ✅ | — | ✅ |
-| | REST API server (12 endpoints) | ✅ | — | — |
+| | REST API server (OpenAPI + SSE) | ✅ | — | — |
 | | CLI (15+ commands) | ✅ | — | — |
 | **Languages** | Full dictionary support | 14 | 2 | 14 |
 | | Universal processor | ✅ | ✅ | ✅ |
@@ -247,7 +247,7 @@ It normalizes typography, simplifies bureaucratic language, diversifies sentence
 | Auto-tuner | ✅ | ❌ |
 | Style presets | ✅ 5 personas | ❌ |
 | Documentation | README + API Ref + Cookbook | README only |
-| REST API | ✅ 12 endpoints | ❌ |
+| REST API | ✅ OpenAPI + SSE | ❌ |
 | Readability metrics | ✅ 6 indices | 0–1 |
 | Morphological engine | ✅ 4 languages | ❌ |
 | Context-aware synonyms | ✅ WSD | Simple random |
@@ -1358,6 +1358,13 @@ The FastAPI example includes request body limits, text and batch size limits,
 per-request timeouts, stable structured error JSON with request ids, and a
 `POST /v1/humanize/batch` endpoint for bulk workflows.
 
+The stdlib server exposes an OpenAPI 3.1 contract for SDK generation and
+gateway imports:
+
+```bash
+curl http://localhost:8080/openapi.json
+```
+
 ### Endpoints
 
 All `POST` endpoints accept JSON body with `{"text": "..."}` and return JSON.
@@ -1376,6 +1383,7 @@ All `POST` endpoints accept JSON body with `{"text": "..."}` and return JSON.
 | `POST` | `/coherence` | Coherence analysis |
 | `POST` | `/readability` | Readability metrics |
 | `GET` | `/health` | Server health check |
+| `GET` | `/openapi.json` | OpenAPI 3.1 schema |
 | `GET` | `/` | API info & endpoint list |
 
 ### Usage with curl
@@ -2544,7 +2552,7 @@ cd js && npx vitest run             # 28 tests
 texthumanize/                   # 94 Python modules, 58,000+ lines
 ├── __init__.py                 # Public API: 25 functions + 5 classes
 ├── core.py                     # Facade: humanize(), analyze(), detect_ai(), etc.
-├── api.py                      # REST API: zero-dependency HTTP server, 12 endpoints
+├── api.py                      # REST API: zero-dependency HTTP server, OpenAPI + SSE
 ├── cli.py                      # CLI: 15+ commands
 ├── pipeline.py                 # 20-stage pipeline + adaptive intensity + graduated retry
 │

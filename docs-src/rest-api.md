@@ -14,6 +14,8 @@ docker run -p 8080:8080 texthumanize
 
 ## Endpoints
 
+OpenAPI 3.1 schema is available at `GET /openapi.json`.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/humanize` | Humanize text |
@@ -29,7 +31,8 @@ docker run -p 8080:8080 texthumanize
 | `POST` | `/coherence` | Coherence analysis |
 | `POST` | `/readability` | Readability metrics |
 | `GET`  | `/health` | Health check |
-| `GET`  | `/sse/humanize` | Server-Sent Events stream |
+| `GET`  | `/openapi.json` | OpenAPI 3.1 schema |
+| `POST` | `/sse/humanize` | Server-Sent Events stream |
 
 ## Examples
 

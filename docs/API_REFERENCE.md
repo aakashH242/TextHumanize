@@ -665,6 +665,12 @@ uvicorn examples.fastapi_integration:app --host 0.0.0.0 --port 8000
 The example adds request/body limits, per-request timeouts, structured error
 JSON with request ids, and `/v1/humanize/batch`.
 
+The stdlib REST server also exposes an OpenAPI 3.1 schema:
+
+```bash
+curl http://localhost:8080/openapi.json
+```
+
 | Method | Endpoint | Description |
 |:-------|:---------|:------------|
 | `POST` | `/humanize` | Humanize text |
@@ -679,6 +685,7 @@ JSON with request ids, and `/v1/humanize/batch`.
 | `POST` | `/coherence` | Coherence analysis |
 | `POST` | `/readability` | Readability metrics |
 | `GET` | `/health` | Health check |
+| `GET` | `/openapi.json` | OpenAPI 3.1 schema |
 | `GET` | `/` | API info |
 
 All responses include `_elapsed_ms`.
