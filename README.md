@@ -1361,6 +1361,9 @@ asyncio.run(main())
 ## 📈 Performance & Benchmarks
 
 All benchmarks on Apple Silicon (M-series), Python 3.12, single thread, after warm-up.
+See the public [Benchmark Methodology](https://ksanyok.github.io/TextHumanize/benchmark-methodology/)
+for corpus labels, quality dimensions, latency reporting rules, and detector
+limitations.
 
 ### Speed
 

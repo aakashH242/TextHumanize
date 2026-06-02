@@ -224,7 +224,9 @@ result = tuner.tune("Text.", max_iterations=5)
 
 ### `BenchmarkSuite`
 
-6-dimension quality benchmarking.
+6-dimension quality benchmarking. See
+[Benchmark Methodology](benchmark-methodology.md) for weights, corpus labels,
+and reporting rules.
 
 ```python
 from texthumanize import BenchmarkSuite

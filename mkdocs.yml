@@ -79,6 +79,7 @@ nav:
   - CLI: cli.md
   - REST API: rest-api.md
   - Architecture: architecture.md
+  - Benchmark Methodology: benchmark-methodology.md
   - Responsible Use: responsible-use.md
   - Changelog: changelog.md
   - License: license.md

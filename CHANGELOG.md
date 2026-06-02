@@ -14,6 +14,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **OpenAPI schema** — the stdlib REST server now exposes `GET /openapi.json` with an OpenAPI 3.1 contract for client generation and gateway imports.
 - **Cross-runtime parity fixtures** — added shared Python/PHP/TypeScript contract tests for humanize, analyze, and AI detection behavior on the same fixtures.
 - **Responsible use guide** — added public guidance for honest detector interpretation, watermark-forensics boundaries, disclosure language, and production safeguards.
+- **Benchmark methodology** — added public reporting rules for corpora, built-in detector metrics, quality dimensions, latency p50/p95, watermark evaluation, and release snapshots.
 
 ### Changed
 - **Safer default preservation** — numeric values are protected by default and semantic placeholders are inline-safe, allowing text around protected values to still be improved.
