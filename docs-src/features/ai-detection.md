@@ -1,6 +1,12 @@
 # AI Detection
 
-13-metric ensemble + 35-feature statistical detector. No ML models, no API keys.
+Explainable built-in detector for internal style-risk scoring. No external API
+keys, no network calls.
+
+!!! note "External detector results"
+    TextHumanize detector scores are internal quality signals. They do not
+    guarantee passing GPTZero, Originality.ai, Turnitin, or any other external
+    detector. See [Responsible Use](../responsible-use.md).
 
 ## Quick Start
 

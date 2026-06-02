@@ -2,7 +2,9 @@
 
 **The most advanced open-source text naturalization engine**
 
-Normalize style, improve readability, and ensure brand-safe content — offline, private, and blazing fast.
+Normalize style, improve readability, and audit AI-like style and watermark
+signals - offline, private, and fast. External AI detector results are not
+guaranteed.
 
 ---
 
@@ -10,23 +12,23 @@ Normalize style, improve readability, and ensure brand-safe content — offline,
 
 | Metric | Value |
 |--------|-------|
-| **Lines of Code** | 58,000+ Python |
-| **Pipeline Stages** | 20 |
-| **Languages** | 14 + universal |
-| **Tests** | 1,956+ passing |
+| **Lines of Code** | 235,000+ |
+| **Pipeline Stages** | 38 |
+| **Languages** | 25 + universal |
+| **Tests** | 2,105+ passing |
 | **Dependencies** | Zero |
 | **Platforms** | Python · JS/TS · PHP |
 
 ## Why TextHumanize?
 
 !!! success "Core Advantages"
-    - **~1,500 chars/sec** — process a full article in milliseconds
-    - **100% private** — all processing is local, your text never leaves your machine
-    - **Precise control** — intensity 0–100, 9 profiles, keyword preservation
-    - **14 languages** — full dictionaries + universal processor for any language
-    - **Zero dependencies** — pure Python stdlib, starts in <100ms
-    - **Reproducible** — seed-based PRNG, same input + seed = identical output
-    - **AI detection** — 13-metric ensemble + 35-feature statistical detector
+    - **300-500 ms per paragraph** - fast enough for interactive workflows and batch jobs
+    - **100% private** - all processing is local, your text never leaves your machine
+    - **Precise control** - intensity 0-100, profiles, keyword preservation, strict gates
+    - **25 languages** - full dictionaries + universal processor for any language
+    - **Zero dependencies** - pure Python stdlib, starts in <100ms
+    - **Reproducible** - seed-based PRNG, same input + seed = identical output
+    - **AI and watermark audit** - explainable internal detector plus unified watermark forensics
 
 ## Quick Example
 
@@ -68,6 +70,10 @@ Try TextHumanize online: **[humanizekit.tester-buyreadysite.website](https://hum
 - :material-cog: **[Profiles](getting-started/profiles.md)**
 
     9 built-in profiles for different content types
+
+- :material-shield-check: **[Responsible Use](responsible-use.md)**
+
+    Honest detector limits, watermark safeguards, and production review rules
 
 </div>
 

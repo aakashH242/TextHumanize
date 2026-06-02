@@ -3,20 +3,20 @@
 ## Module Structure
 
 ```
-texthumanize/                    # 94 Python modules, 58,000+ lines
+texthumanize/                    # 122 Python modules, 235,000+ lines
 ├── core.py                      # Facade: humanize(), analyze(), detect_ai()
 ├── async_api.py                 # Async wrappers: async_humanize(), async_detect_ai()
-├── pipeline.py                  # 20-stage pipeline + adaptive intensity
+├── pipeline.py                  # 38-stage pipeline + adaptive intensity
 ├── api.py                       # REST API server (OpenAPI + SSE)
 ├── cli.py                       # CLI (15+ commands)
 ├── exceptions.py                # Exception hierarchy
 │
 ├── analyzer.py                  # Artificiality scoring + 6 readability metrics
-├── detectors.py                 # AI detector: 13 metrics + ensemble
+├── detectors.py                 # AI detector: heuristic metrics + ensemble
 ├── statistical_detector.py      # 35-feature ML classifier
 ├── pos_tagger.py                # POS tagger (EN/RU/UK/DE)
 ├── collocation_engine.py        # PMI collocation scoring (2,511 collocations)
-├── word_lm.py                   # Word-level LM (14 langs)
+├── word_lm.py                   # Word-level LM and language statistics
 │
 ├── normalizer.py                # Typography (stage 2)
 ├── decancel.py                  # Debureaucratization (stage 3)
@@ -34,7 +34,7 @@ texthumanize/                    # 94 Python modules, 58,000+ lines
 ├── coherence.py                 # Coherence analysis
 ├── morphology.py                # Morphological engine (RU/UK/EN/DE)
 │
-└── lang/                        # 14 language packs + registry
+└── lang/                        # 25 language packs + universal registry
     ├── en.py, ru.py, de.py ...  # Data only, no logic
     └── ar.py, zh.py, ja.py ...  # Including CJK + RTL
 ```
@@ -49,7 +49,7 @@ Input → Watermark Cleaning → Segmentation → CJK Segmentation → Typograph
       → Coherence Repair → Fingerprint Diversification → Validation → Output
 ```
 
-20 stages with:
+38 stages with:
 
 - **Adaptive intensity** — auto-reduces processing for already-natural text
 - **Graduated retry** — retries at lower intensity if change ratio exceeds limit

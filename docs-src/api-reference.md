@@ -6,7 +6,7 @@ Full Python API reference for TextHumanize.
 
 ### `humanize(text, lang, profile, intensity, ...)`
 
-Humanize text using the 20-stage pipeline.
+Humanize text using the 38-stage pipeline.
 
 ```python
 from texthumanize import humanize
@@ -44,7 +44,7 @@ result.metrics_after["humanize_explain"]
 
 ### `detect_ai(text, lang)`
 
-Detect AI-generated content using 13 metrics.
+Detect AI-like style signals using the built-in detector ensemble.
 
 ```python
 from texthumanize import detect_ai

@@ -3,6 +3,12 @@
 Detect and remove invisible Unicode watermarks, homoglyph substitutions,
 metadata markers, and statistical LLM watermark signals.
 
+!!! note "Authorized use"
+    Use watermark forensics on content you own or are authorized to inspect.
+    `clean_safe()` is intended for obvious Unicode cleanup; aggressive
+    neutralization should be reviewed and logged. See
+    [Responsible Use](../responsible-use.md).
+
 ## Detect
 
 ```python

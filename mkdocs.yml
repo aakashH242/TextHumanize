@@ -1,5 +1,5 @@
 site_name: TextHumanize
-site_description: "Algorithmic text humanization with AI detection — 17-stage pipeline, 14 languages, zero dependencies"
+site_description: "Algorithmic text naturalization with AI detection — 38-stage pipeline, 25 languages, zero dependencies"
 site_url: https://ksanyok.github.io/TextHumanize/
 repo_url: https://github.com/ksanyok/TextHumanize
 repo_name: ksanyok/TextHumanize
@@ -79,6 +79,7 @@ nav:
   - CLI: cli.md
   - REST API: rest-api.md
   - Architecture: architecture.md
+  - Responsible Use: responsible-use.md
   - Changelog: changelog.md
   - License: license.md
 

@@ -72,6 +72,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 - [PHP Library](#-php-library)
 - [Testing & Quality](#-testing--quality)
 - [Security & Limits](#-security--limits)
+- [Responsible Use](#-responsible-use)
 - [For Business & Enterprise](#-for-business--enterprise)
 - [FAQ & Troubleshooting](#-faq--troubleshooting)
 - [What's New in v0.28.4](#-whats-new-in-v0284)
@@ -1642,6 +1643,33 @@ cd js && npm test                  # 28 tests
 | Memory exhaustion | 1 MB input limit, streaming for large texts |
 | Model poisoning | Weights are read-only compressed JSON; no runtime training by default |
 | Dependency supply chain | Zero pip dependencies — nothing to compromise |
+
+---
+
+## Responsible Use
+
+TextHumanize is built for style normalization, readability improvement,
+privacy-preserving audits, and internal AI-like/watermark risk checks. It does
+not guarantee passing external AI detectors, and its detector scores should be
+treated as internal quality signals rather than universal authorship verdicts.
+
+Use it for content you own or are authorized to edit. Do not use it to
+misrepresent authorship, bypass required disclosure, remove provenance signals
+from third-party content, or submit work in contexts where AI assistance is
+prohibited.
+
+Recommended production safeguards:
+
+- show before/after diffs and `change_ratio` to reviewers;
+- enable `quality_gate="strict"` for sensitive content;
+- use `minimal=True` / `--only-flagged` when only risky spans need edits;
+- preserve brand terms, named entities, numbers, URLs, quotes, and code;
+- require manual review for legal, medical, financial, academic, and policy
+  content;
+- use neutral customer-facing language: "internal style and watermark risk
+  signals", not "guaranteed detector bypass".
+
+See the full [Responsible Use guide](https://ksanyok.github.io/TextHumanize/responsible-use/).
 
 ---
 
