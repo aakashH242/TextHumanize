@@ -4,9 +4,12 @@
 
 ### The most advanced open-source text naturalization engine
 
-**Transform AI-generated text into natural, human-like content — with proprietary PHANTOM™, ASH™, and SentenceValidator™ technologies**
+**Transform AI-generated text into clearer, more natural prose — with proprietary PHANTOM™, ASH™, and SentenceValidator™ technologies**
 
-**Reduce AI detection scores by 60–90% · 25 languages · 38-stage adaptive pipeline · 100% offline · Zero dependencies**
+**Reduce built-in AI-like style signals · 25 languages · 38-stage adaptive pipeline · 100% offline · Zero dependencies**
+
+**External AI detector results are not guaranteed.** TextHumanize improves style,
+readability, and internal risk signals; it is not a bypass guarantee.
 
 <br/>
 
@@ -25,7 +28,7 @@
 
 **235,000+ lines of code** · **122 Python modules** · **38-stage pipeline** · **25 languages + universal** · **2,105 tests**
 
-**3 proprietary technologies:** PHANTOM™ (gradient-guided adversarial engine) · ASH™ (adaptive signature humanization) · SentenceValidator™ (interstage quality gate)
+**3 proprietary technologies:** PHANTOM™ (gradient-guided internal score optimization) · ASH™ (adaptive signature humanization) · SentenceValidator™ (interstage quality gate)
 
 [Quick Start](#-quick-start) · [Proprietary Technologies](#-proprietary-technologies) · [Before & After](#-before--after-examples) · [Features](#-feature-matrix) · [Benchmarks](#-performance--benchmarks) · [AI Detection](#-ai-detection-engine) · [API Reference](#-api-reference) · [Documentation](https://ksanyok.github.io/TextHumanize/) · [Live Demo](https://texthumanize.link/) · [License](#-license--pricing)
 
@@ -79,7 +82,7 @@
 
 ---
 
-TextHumanize is a **pure-algorithmic text processing engine** that transforms AI-generated text into natural, human-like content. Three proprietary technologies — **PHANTOM™** (gradient-guided adversarial optimization), **ASH™** (adaptive signature humanization), and **SentenceValidator™** (interstage quality control) — drive a 38-stage pipeline that reduces AI detection scores by 60–90%. No neural networks, no API keys, no internet — just 235K+ lines of finely tuned rules, dictionaries, and statistical methods.
+TextHumanize is a **pure-algorithmic text processing engine** that transforms AI-generated drafts into clearer, more natural prose. Three proprietary technologies — **PHANTOM™** (gradient-guided optimization against TextHumanize's own detector), **ASH™** (adaptive signature humanization), and **SentenceValidator™** (interstage quality control) — drive a 38-stage pipeline that reduces built-in AI-like style signals while preserving meaning. No neural networks, no API keys, no internet — just 235K+ lines of finely tuned rules, dictionaries, and statistical methods.
 
 > **Honest note:** TextHumanize is a style-normalization tool, not an AI-detection bypass tool. It reduces AI-like patterns (formulaic connectors, uniform sentence length, bureaucratic vocabulary) but does not guarantee that processed text will pass external AI detectors. Quality of humanization varies by language and text type. See [Limitations](#-limitations) below.
 
@@ -122,9 +125,9 @@ TextHumanize is a **pure-algorithmic text processing engine** that transforms AI
 
 TextHumanize includes three original, proprietary technologies not found in any other open-source library:
 
-### PHANTOM™ — Gradient-Guided Adversarial Humanization Engine
+### PHANTOM™ — Gradient-Guided Text Optimization Engine
 
-**`phantom.py` — 2,943 lines** | The only open-source text humanizer that uses numerical gradient optimization against its own AI detector.
+**`phantom.py` — 2,943 lines** | An open-source text naturalizer that uses numerical gradient optimization against TextHumanize's own AI detector.
 
 ```
 Input Text → ORACLE (gradient analysis) → SURGEON (32 surgical ops) → FORGE (iterative optimization) → Output
@@ -133,11 +136,11 @@ Input Text → ORACLE (gradient analysis) → SURGEON (32 surgical ops) → FORG
 - **ORACLE** computes numerical gradients through the MLP detector via central differences (~70 forward passes, ~1.4ms), producing per-feature contribution analysis and ranked gap reports
 - **SURGEON** executes 32 feature-targeted surgical text operations guided by Oracle gradients — rank-based magnitude scheduling focuses effort on highest-impact features first
 - **FORGE** runs an iterative optimization loop with combined score tracking, stall detection, adaptive budget escalation, text expansion limits, and post-iteration cleanup
-- **Result:** 100% bypass rate on built-in detector (15/15 texts across EN, RU, UK). Processing time: 0.7–1.4s
+- **Result:** 100% internal pass rate on TextHumanize's built-in detector benchmark (15/15 texts across EN, RU, UK). Processing time: 0.7–1.4s. External detectors use different models and are not guaranteed.
 
 ```python
 result = humanize("AI text...", lang="en", phantom=True)  # Enable PHANTOM™
-result = humanize_until_human("AI text...", lang="en")     # Auto-iterates with PHANTOM™
+result = humanize_until_human("AI text...", lang="en")     # Auto-iterates against the built-in score
 ```
 
 ### ASH™ — Adaptive Signature Humanization
@@ -535,7 +538,7 @@ Input Text
   ├─ [P1] Detector-in-the-loop       Score check, up to 3 retry iterations
   ├─ [P2] LLM-assisted rewrite       Optional, if backend configured
   ├─ [P3] Regression guard           Hard constraint enforcement
-  ├─ [P4] PHANTOM™ optimization      Gradient-guided adversarial refinement (optional)
+  ├─ [P4] PHANTOM™ optimization      Gradient-guided internal score refinement (optional)
   │
   ├── ASH™ Post-Processing (3 stages) ──
   ├─ [A4] ASH Signature Transfer     Apply target human signature
@@ -1416,7 +1419,7 @@ texthumanize/                        # 122 Python modules, 235,000+ lines
 ├── core.py                          # Facade: 28+ public functions (2,391 lines)
 ├── pipeline.py                      # 38-stage pipeline + adaptive intensity (1,553 lines)
 ├── sentence_validator.py            # SentenceValidator™: interstage quality gate (350 lines)
-├── phantom.py                       # PHANTOM™: gradient-guided adversarial engine (2,943 lines)
+├── phantom.py                       # PHANTOM™: gradient-guided internal score engine (2,943 lines)
 ├── api.py                           # REST API server, OpenAPI + SSE
 ├── async_api.py                     # Async wrappers for all functions (200 lines)
 ├── cli.py                           # CLI (15+ commands) (1,492 lines)
@@ -1665,7 +1668,7 @@ cd js && npm test                  # 28 tests
 | `humanize()` | Full 38-stage pipeline | General-purpose normalization |
 | `humanize_batch()` | Parallel processing (N workers) | Bulk content processing |
 | `humanize_chunked()` | Split + process + rejoin | Documents > 10K chars |
-| `humanize_until_human()` | Iterative (loop until target score) | High-quality output |
+| `humanize_until_human()` | Iterative (loop until built-in target score) | High-quality output |
 | `humanize_stream()` | SSE paragraph streaming | Real-time UI |
 | `humanize_ai()` | Rules + LLM backend (OpenAI/Ollama) | Maximum quality |
 
@@ -1686,8 +1689,8 @@ docker run -v $(pwd):/data texthumanize /data/input.txt -o /data/output.txt -l e
 **Q: Does TextHumanize guarantee passing GPTZero / Originality.ai / Turnitin?**
 No. TextHumanize is a style normalization tool. It reduces AI-like patterns but does not guarantee bypassing external AI detectors. See [Limitations](#-limitations).
 
-**Q: What's the best profile for reducing AI detection scores?**
-`chat` with intensity 60–80 gives the largest reduction (up to -53 percentage points in our benchmarks). For professional content, try `web` at 70.
+**Q: What's the best profile for reducing AI-like style signals?**
+`chat` with intensity 60–80 gives the largest reduction on TextHumanize's built-in detector benchmark. For professional content, try `web` at 70. External detector outcomes vary and should be verified separately.
 
 **Q: How do I preserve keywords (e.g., for SEO)?**
 Use `constraints={"keep_keywords": ["keyword1", "keyword2"]}` or

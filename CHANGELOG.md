@@ -16,6 +16,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - **Safer default preservation** — numeric values are protected by default and semantic placeholders are inline-safe, allowing text around protected values to still be improved.
+- **Responsible detector positioning** — clarified that TextHumanize improves style, readability, and built-in AI-like risk signals but does not guarantee passing external AI detectors.
 
 ## [0.28.4] - 2026-06-01
 

@@ -1,7 +1,8 @@
 # PHANTOM™ API Reference
 
-> **PHANTOM™** (PHysical Adversarial Network for Text Optimization and Manipulation)
-> — gradient-guided bypass engine for AI detection evasion.
+> **PHANTOM™** (PHysical Analysis Network for Text Optimization and Manipulation)
+> — gradient-guided text optimization against TextHumanize's own AI detector.
+> External detector outcomes are not guaranteed.
 
 ## Table of Contents
 
@@ -25,20 +26,26 @@
 
 ## Overview
 
-PHANTOM™ is a three-stage optimization engine that reduces AI detection scores
-by analyzing neural feature gradients and applying targeted text transformations:
+PHANTOM™ is a three-stage optimization engine that reduces TextHumanize's
+built-in AI-like style score by analyzing neural feature gradients and applying
+targeted text transformations:
 
 1. **ORACLE** — Computes numerical gradients of the neural detector to identify
    which text features contribute most to AI classification.
 2. **SURGEON** — Applies 32 targeted text operations (synonym swap, sentence
    restructuring, filler injection, etc.) guided by the gradient analysis.
-3. **FORGE** — Iterates ORACLE → SURGEON in a loop until the target detection
+3. **FORGE** — Iterates ORACLE → SURGEON in a loop until the target internal
    score is reached or no further improvement is possible.
 
 **Key metrics (v0.26.0):**
-- 93% bypass rate (14/15 texts classified as "human")
+- 93% internal pass rate on TextHumanize's built-in detector benchmark
+  (14/15 texts classified as "human" by the internal detector)
 - EN 100%, RU 100%, UK 80%
 - DE, FR, ES support with full dictionaries
+
+> PHANTOM™ is an internal optimization and analysis tool. It can reduce
+> TextHumanize's own detector score, but it does not guarantee passing GPTZero,
+> Originality.ai, Turnitin, or any other external detector.
 
 ---
 
@@ -54,7 +61,7 @@ result = th.humanize(
     lang="en",
     phantom=True,           # Enable PHANTOM™
     phantom_budget=1.0,     # Edit budget (0.0–1.0)
-    phantom_target=0.30,    # Target AI score
+    phantom_target=0.30,    # Target built-in AI-like score
     seed=42,                # Reproducibility
 )
 print(result.text)
@@ -148,7 +155,7 @@ result = th.humanize(
     *,
     phantom: bool = False,          # Enable PHANTOM™ engine
     phantom_budget: float = 1.0,    # Edit budget (0.0 = minimal, 1.0 = full)
-    phantom_target: float = 0.30,   # Target AI detection score
+    phantom_target: float = 0.30,   # Target built-in AI-like score
     seed: int | None = None,
     # ... other humanize params
 ) -> HumanizeResult
@@ -266,8 +273,8 @@ from texthumanize import ForgeResult
 |---|---|---|
 | `original_text` | `str` | Input text before optimization |
 | `optimized_text` | `str` | Output text after optimization |
-| `original_score` | `float` | AI detection score before (0.0–1.0) |
-| `final_score` | `float` | AI detection score after (0.0–1.0) |
+| `original_score` | `float` | Built-in detector score before optimization (0.0–1.0) |
+| `final_score` | `float` | Built-in detector score after optimization (0.0–1.0) |
 | `iterations` | `int` | Number of FORGE iterations executed |
 | `trace` | `list[ForgeStep]` | Per-iteration trace data |
 | `final_report` | `FeatureGapReport` | Feature analysis of the final text |
@@ -277,7 +284,7 @@ from texthumanize import ForgeResult
 | Property | Type | Description |
 |---|---|---|
 | `improvement` | `float` | Score improvement (`original_score - final_score`) |
-| `bypassed` | `bool` | `True` if `final_score ≤ 0.34` (verdict: "human") |
+| `bypassed` | `bool` | Legacy internal threshold flag: `True` if `final_score ≤ 0.34` in TextHumanize's built-in detector |
 
 **Methods:**
 
@@ -292,7 +299,7 @@ result = phantom_optimize("AI text...", lang="en")
 
 print(f"Score: {result.original_score:.3f} → {result.final_score:.3f}")
 print(f"Improvement: {result.improvement:.3f}")
-print(f"Bypassed: {result.bypassed}")
+print(f"Internal pass: {result.bypassed}")
 print(f"Iterations: {result.iterations}")
 print(result.summary())
 ```
@@ -306,7 +313,7 @@ One step of the FORGE optimization loop.
 | Field | Type | Description |
 |---|---|---|
 | `iteration` | `int` | Zero-based iteration index |
-| `score` | `float` | Detection score at this step |
+| `score` | `float` | Built-in detector score at this step |
 | `top_features` | `list[str]` | Names of top contributing features |
 | `top_contributions` | `list[float]` | Contribution values of those features |
 
@@ -328,7 +335,7 @@ Complete analysis of a text's AI detection features.
 
 | Field | Type | Description |
 |---|---|---|
-| `score` | `float` | Current AI detection score |
+| `score` | `float` | Current built-in detector score |
 | `raw_features` | `list[float]` | Raw (unnormalized) 35-dim feature vector |
 | `normed_features` | `list[float]` | Z-score normalized feature vector |
 | `gradients` | `list[float]` | Per-feature gradient (impact on score) |
@@ -417,9 +424,9 @@ result = phantom_optimize(
 )
 
 if result.bypassed:
-    print("✅ Text classified as human!")
+    print("✅ Text classified as human by the built-in detector!")
 else:
-    print(f"⚠️ Score reduced to {result.final_score:.3f} but not bypassed")
+    print(f"⚠️ Built-in score reduced to {result.final_score:.3f} but still flagged")
 
 # Print optimization trace
 for step in result.trace:
@@ -459,7 +466,7 @@ result = phantom_optimize(ukrainian_text, lang="uk")
 
 ## Supported Languages
 
-| Language | Code | PHANTOM™ Dict Entries | Bypass Rate |
+| Language | Code | PHANTOM™ Dict Entries | Internal Pass Rate |
 |---|---|---|---|
 | English | `en` | Full pipeline | 100% (5/5) |
 | Russian | `ru` | 100+ AI replacements | 100% (5/5) |
@@ -474,7 +481,7 @@ result = phantom_optimize(ukrainian_text, lang="uk")
 
 | Metric | Value |
 |---|---|
-| **Bypass rate** | 93% (14/15 texts) |
+| **Internal pass rate** | 93% (14/15 texts on TextHumanize's built-in detector benchmark) |
 | **Avg score reduction** | 0.67 → 0.14 (Δ 0.53) |
 | **Avg iterations** | 3–8 |
 | **Processing time** | 5–20s per text (depends on length) |
@@ -483,7 +490,7 @@ result = phantom_optimize(ukrainian_text, lang="uk")
 
 ### Comparison
 
-| Method | Avg Δ Score | Bypass Rate |
+| Method | Avg Δ Score | Internal Pass Rate |
 |---|---|---|
 | Naturalizer only | ~0.10–0.15 | ~30% |
 | ASH™ balanced | ~0.32 | ~70% |
