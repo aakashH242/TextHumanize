@@ -16,7 +16,7 @@ from texthumanize.content_classifier import classify as classify_content
 from texthumanize.decancel import Debureaucratizer
 from texthumanize.fingerprint_randomizer import FingerprintRandomizer
 from texthumanize.grammar_fix import GrammarCorrector
-from texthumanize.lang import get_language_tier
+from texthumanize.lang import get_lang_pack, get_language_tier
 from texthumanize.liveliness import LivelinessInjector
 from texthumanize.naturalizer import TextNaturalizer
 from texthumanize.normalizer import TypographyNormalizer
@@ -529,8 +529,284 @@ class Pipeline:
                 metrics_after=result.metrics_after,
             )
 
+        result = self._apply_anti_overhumanize_guard(text, result, lang)
         result = self._apply_strict_quality_gate(text, result, lang)
         return result
+
+    def _apply_anti_overhumanize_guard(
+        self,
+        original: str,
+        result: HumanizeResult,
+        lang: str,
+    ) -> HumanizeResult:
+        """Trim excessive humanization artifacts from late pipeline passes."""
+        import re as _re
+
+        current = result.text
+        if not current:
+            return result
+
+        sentence_count = max(1, len(_re.findall(r'[.!?]+', current)))
+        markers = self._overhumanize_markers(lang)
+        marker_alt = "|".join(_re.escape(m) for m in markers)
+
+        def _count_sentence_marks(text: str, mark: str) -> int:
+            return len(_re.findall(rf'\{mark}(?=(?:\s|$|["\')\]]))', text))
+
+        def _count_markers(text: str) -> int:
+            if not marker_alt:
+                return 0
+            return len(
+                _re.findall(
+                    rf'(?<!\w)(?:{marker_alt})(?!\w)',
+                    text,
+                    flags=_re.IGNORECASE,
+                )
+            )
+
+        def _signal(text: str) -> dict[str, int]:
+            return {
+                "repeated_punctuation": len(_re.findall(r'(?:[!?]){2,}', text)),
+                "sentence_end_exclamations": _count_sentence_marks(text, "!"),
+                "sentence_end_questions": _count_sentence_marks(text, "?"),
+                "colloquial_markers": _count_markers(text),
+            }
+
+        before = _signal(current)
+        cleaned = current
+        cleanup_counts = {
+            "punctuation_collapsed": 0,
+            "excess_exclamations": 0,
+            "excess_questions": 0,
+            "duplicate_markers": 0,
+            "excess_markers": 0,
+        }
+
+        cleaned, mixed = _re.subn(
+            r'(?:[!?]){3,}',
+            lambda m: "?" if "?" in m.group(0) else "!",
+            cleaned,
+        )
+        cleanup_counts["punctuation_collapsed"] += mixed
+        cleaned, bangs = _re.subn(r'!{2,}', '!', cleaned)
+        cleanup_counts["punctuation_collapsed"] += bangs
+        cleaned, questions = _re.subn(r'\?{2,}', '?', cleaned)
+        cleanup_counts["punctuation_collapsed"] += questions
+
+        def _limit_sentence_marks(
+            text: str,
+            mark: str,
+            allowed: int,
+            replacement: str,
+        ) -> tuple[str, int]:
+            seen = 0
+            trimmed = 0
+
+            def _replace(match: _re.Match[str]) -> str:
+                nonlocal seen, trimmed
+                seen += 1
+                if seen <= allowed:
+                    return match.group(0)
+                trimmed += 1
+                return replacement
+
+            return (
+                _re.sub(rf'\{mark}(?=(?:\s|$|["\')\]]))', _replace, text),
+                trimmed,
+            )
+
+        allowed_exclamations = max(
+            _count_sentence_marks(original, "!"),
+            min(3, max(1, sentence_count // 8)),
+        )
+        allowed_questions = max(
+            _count_sentence_marks(original, "?"),
+            min(4, max(1, sentence_count // 5)),
+        )
+        cleaned, trimmed_bang = _limit_sentence_marks(
+            cleaned, "!", allowed_exclamations, ".",
+        )
+        cleanup_counts["excess_exclamations"] += trimmed_bang
+        cleaned, trimmed_question = _limit_sentence_marks(
+            cleaned, "?", allowed_questions, ".",
+        )
+        cleanup_counts["excess_questions"] += trimmed_question
+
+        if marker_alt:
+            for marker in markers:
+                escaped = _re.escape(marker)
+                pattern = rf'(?<!\w)({escaped})\s*,\s*\1\b\s*,?\s*'
+                cleaned, duplicate_count = _re.subn(
+                    pattern,
+                    r'\1, ',
+                    cleaned,
+                    flags=_re.IGNORECASE,
+                )
+                cleanup_counts["duplicate_markers"] += duplicate_count
+
+            allowed_markers = max(
+                self._count_overhumanize_marker_starts(original, markers),
+                min(2, max(1, sentence_count // 8)),
+            )
+            marker_seen = 0
+
+            def _leading_marker(match: _re.Match[str]) -> str:
+                nonlocal marker_seen
+                marker_seen += 1
+                if marker_seen <= allowed_markers:
+                    return match.group(0)
+                cleanup_counts["excess_markers"] += 1
+                return match.group(1)
+
+            leading_pattern = (
+                rf'(^|(?<=[.!?])\s+)'
+                rf'((?:{marker_alt})(?:\s*,\s*|\s*[:;]\s*|\s+[-–—]\s+|\s+))'
+            )
+            cleaned = _re.sub(
+                leading_pattern,
+                _leading_marker,
+                cleaned,
+                flags=_re.IGNORECASE,
+            )
+
+            inline_seen = 0
+
+            def _inline_marker(match: _re.Match[str]) -> str:
+                nonlocal inline_seen
+                inline_seen += 1
+                if marker_seen + inline_seen <= allowed_markers:
+                    return match.group(0)
+                cleanup_counts["excess_markers"] += 1
+                return f"{match.group(1)} "
+
+            cleaned = _re.sub(
+                rf'(\b[\w\'-]{{2,}}\b),\s+(?:{marker_alt}),\s+',
+                _inline_marker,
+                cleaned,
+                flags=_re.IGNORECASE,
+            )
+
+        cleaned = _re.sub(r'\s+([,.;:!?])', r'\1', cleaned)
+        cleaned = _re.sub(r'[ \t]{2,}', ' ', cleaned)
+        cleaned = _re.sub(
+            r'(^|[.!?]\s+)([a-zа-яёіїєґ])',
+            lambda m: m.group(1) + m.group(2).upper(),
+            cleaned,
+        ).strip()
+
+        after = _signal(cleaned)
+        guard_meta = {
+            "triggered": cleaned != current,
+            "before": before,
+            "after": after,
+            "limits": {
+                "sentence_end_exclamations": allowed_exclamations,
+                "sentence_end_questions": allowed_questions,
+                "colloquial_markers": (
+                    max(
+                        self._count_overhumanize_marker_starts(original, markers),
+                        min(2, max(1, sentence_count // 8)),
+                    )
+                    if markers else 0
+                ),
+            },
+            "cleanups": cleanup_counts,
+        }
+
+        if cleaned == current:
+            return HumanizeResult(
+                original=result.original,
+                text=result.text,
+                lang=result.lang,
+                profile=result.profile,
+                intensity=result.intensity,
+                changes=result.changes,
+                metrics_before=result.metrics_before,
+                metrics_after={
+                    **result.metrics_after,
+                    "anti_overhumanize": guard_meta,
+                },
+            )
+
+        return HumanizeResult(
+            original=result.original,
+            text=cleaned,
+            lang=result.lang,
+            profile=result.profile,
+            intensity=result.intensity,
+            changes=[
+                *result.changes,
+                {
+                    "type": "anti_overhumanize_guard",
+                    "description": (
+                        "Финальная защита от чрезмерной разговорности, "
+                        "повторных маркеров и лишней экспрессивной пунктуации"
+                    ),
+                },
+            ],
+            metrics_before=result.metrics_before,
+            metrics_after={
+                **result.metrics_after,
+                "anti_overhumanize": guard_meta,
+            },
+        )
+
+    @staticmethod
+    def _overhumanize_markers(lang: str) -> list[str]:
+        """Return language-aware discourse markers that can stack unnaturally."""
+        common = {
+            "en": (
+                "actually", "honestly", "basically", "well", "look",
+                "you know", "i mean", "frankly", "truthfully",
+                "the thing is", "to be honest", "in fact",
+            ),
+            "ru": (
+                "кстати", "на самом деле", "по сути", "ну", "вот",
+                "вообще", "собственно", "если честно", "проще говоря",
+            ),
+            "uk": (
+                "до речі", "насправді", "по суті", "ну", "ось",
+                "власне", "якщо чесно", "простіше кажучи",
+            ),
+            "de": (
+                "eigentlich", "ehrlich gesagt", "tatsächlich", "also",
+                "im grunde", "übrigens",
+            ),
+            "fr": (
+                "en fait", "franchement", "bon", "au fond",
+                "d'ailleurs", "en gros",
+            ),
+            "es": (
+                "de hecho", "la verdad", "bueno", "pues",
+                "básicamente", "por cierto",
+            ),
+        }
+        markers = {
+            str(marker).strip().lower()
+            for marker in get_lang_pack(lang).get("colloquial_markers", [])
+            if str(marker).strip()
+        }
+        markers.update(common.get(lang, common["en"]))
+        return sorted(markers, key=len, reverse=True)
+
+    @staticmethod
+    def _count_overhumanize_marker_starts(
+        text: str,
+        markers: list[str],
+    ) -> int:
+        """Count sentence-start discourse markers in a text."""
+        if not text or not markers:
+            return 0
+        import re as _re
+
+        marker_alt = "|".join(_re.escape(m) for m in markers)
+        return len(
+            _re.findall(
+                rf'(^|(?<=[.!?])\s+)(?:{marker_alt})(?:\s*,|\s|[:;])',
+                text,
+                flags=_re.IGNORECASE,
+            )
+        )
 
     def _apply_strict_quality_gate(
         self,

@@ -14,6 +14,8 @@ import re
 import pytest
 
 from texthumanize import humanize
+from texthumanize.pipeline import Pipeline
+from texthumanize.utils import HumanizeOptions, HumanizeResult
 
 # ── Test data ─────────────────────────────────────────────
 
@@ -382,6 +384,65 @@ class TestRepetition:
             if len(s) > 20:  # Only check non-trivial sentences
                 assert s not in seen, f"Duplicate sentence: {s[:60]}..."
                 seen.add(s)
+
+
+# ── Anti-overhumanization tests ───────────────────────────
+
+class TestAntiOverhumanizeGuard:
+    """Final guard should trim artificial conversational artifacts."""
+
+    @staticmethod
+    def _guard(text: str, original: str | None = None) -> HumanizeResult:
+        baseline = original or (
+            "The rollout improves clarity. Teams can review changes. "
+            "Governance remains simple. Updates are visible."
+        )
+        pipeline = Pipeline(
+            HumanizeOptions(lang="en", profile="web", intensity=80, seed=42)
+        )
+        result = HumanizeResult(
+            original=baseline,
+            text=text,
+            lang="en",
+            profile="web",
+            intensity=80,
+            changes=[],
+            metrics_before={},
+            metrics_after={},
+        )
+        return pipeline._apply_anti_overhumanize_guard(baseline, result, "en")
+
+    def test_trims_excessive_fillers_and_punctuation(self):
+        text = (
+            "Actually, the rollout improves clarity!! "
+            "Well, teams can review changes! "
+            "Honestly, governance remains simple! "
+            "Actually, actually, updates are visible???"
+        )
+
+        guarded = self._guard(text)
+
+        assert "!!" not in guarded.text
+        assert "??" not in guarded.text
+        assert guarded.text.count("!") <= 1
+        assert guarded.text.count("?") <= 1
+        assert "Actually, actually" not in guarded.text
+        assert guarded.metrics_after["anti_overhumanize"]["triggered"] is True
+        assert any(
+            change.get("type") == "anti_overhumanize_guard"
+            for change in guarded.changes
+        )
+
+    def test_leaves_natural_output_unchanged(self):
+        text = (
+            "The rollout improves clarity. Teams can review changes. "
+            "Governance remains simple. Updates are visible."
+        )
+
+        guarded = self._guard(text)
+
+        assert guarded.text == text
+        assert guarded.metrics_after["anti_overhumanize"]["triggered"] is False
 
 
 # ── Edge case tests ───────────────────────────────────────

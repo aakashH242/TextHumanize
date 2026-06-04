@@ -710,6 +710,7 @@ print(report["per_language"]["en"]["avg_score_by_label"])
 | `.quality_score` | `float` | Quality metric |
 | `.similarity` | `float` | Semantic similarity to original |
 | `.metrics_after["humanize_explain"]` | `dict` | Top 5 change reasons, top 5 remaining risks, sentence-level risk deltas |
+| `.metrics_after["anti_overhumanize"]` | `dict` | Final guard report for stacked fillers, repeated discourse markers, and excessive `!` / `?` punctuation |
 | `.stages` | `list` | Stages applied with timing |
 
 ### Other Humanization Modes
@@ -1681,6 +1682,7 @@ Recommended production safeguards:
 
 - show before/after diffs and `change_ratio` to reviewers;
 - enable `quality_gate="strict"` for sensitive content;
+- review `metrics_after["anti_overhumanize"]` when high-intensity profiles are used;
 - use `minimal=True` / `--only-flagged` when only risky spans need edits;
 - preserve brand terms, named entities, numbers, URLs, quotes, and code;
 - require manual review for legal, medical, financial, academic, and policy
@@ -1781,6 +1783,7 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 - **Unified watermark forensics** — `watermark_report()` covers invisible Unicode, homoglyphs, fullwidth/math lookalikes, and statistical watermark hypotheses with p-value/z-score evidence.
 - **Promopilot-ready audit JSON** — `audit_report()` combines AI and watermark findings in a stable schema for product integrations and batch workflows.
 - **Stricter quality controls** — `quality_gate="strict"` can reject risky rewrites, while `minimal=True` / `--only-flagged` changes only flagged fragments.
+- **Anti-overhumanize final guard** — high-intensity output now trims stacked fillers, repeated discourse markers, and excessive expressive punctuation before returning.
 - **Better short commercial copy coverage** — golden-set regression tests now cover landing, product, and support copy patterns.
 - **CI and release hardening** — GitHub CI is green across Python 3.9-3.13, PHP 8.1-8.3, TypeScript/JavaScript, and docs; local release coverage is 80.09%.
 
