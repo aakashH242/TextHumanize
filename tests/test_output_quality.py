@@ -10,6 +10,7 @@ text naturalness and doesn't introduce regressions like:
 """
 
 import re
+from typing import Optional
 
 import pytest
 
@@ -392,7 +393,7 @@ class TestAntiOverhumanizeGuard:
     """Final guard should trim artificial conversational artifacts."""
 
     @staticmethod
-    def _guard(text: str, original: str | None = None) -> HumanizeResult:
+    def _guard(text: str, original: Optional[str] = None) -> HumanizeResult:
         baseline = original or (
             "The rollout improves clarity. Teams can review changes. "
             "Governance remains simple. Updates are visible."
