@@ -71,6 +71,10 @@ Try TextHumanize online: **[humanizekit.tester-buyreadysite.website](https://hum
 
     9 built-in profiles for different content types
 
+- :material-lock-check: **[Private Offline Workflow](getting-started/private-offline-workflow.md)**
+
+    Local audit, safe cleanup, strict humanization, and review metrics
+
 - :material-shield-check: **[Responsible Use](responsible-use.md)**
 
     Honest detector limits, watermark safeguards, and production review rules

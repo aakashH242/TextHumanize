@@ -63,6 +63,7 @@ nav:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quickstart.md
     - Profiles: getting-started/profiles.md
+    - Private Offline Workflow: getting-started/private-offline-workflow.md
   - Features:
     - AI Detection: features/ai-detection.md
     - Paraphrasing: features/paraphrasing.md

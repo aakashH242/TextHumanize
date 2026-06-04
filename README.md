@@ -42,6 +42,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 - [Proprietary Technologies](#-proprietary-technologies)
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
+- [Private Offline Workflow](#-private-offline-workflow)
 - [Before & After Examples](#-before--after-examples)
 - [Feature Matrix](#-feature-matrix)
 - [Comparison with Competitors](#-comparison-with-competitors)
@@ -244,6 +245,21 @@ print(f"Artificiality: {report.artificiality_score:.1f}/100")
 # 5. Full change report
 print(explain(result))
 ```
+
+## Private Offline Workflow
+
+For privacy-sensitive content, use the local audit -> safe cleanup -> strict
+humanize -> audit pattern. It keeps processing offline, preserves critical
+terms, and records review metrics without using cloud APIs.
+
+```bash
+python examples/private_offline_workflow.py
+```
+
+The example uses `backend="local"`, `quality_gate="strict"`, `minimal=True`,
+brand/identifier preservation, and a socket guard that raises if any code tries
+to open a network connection. See the full
+[Private Offline Workflow guide](https://ksanyok.github.io/TextHumanize/getting-started/private-offline-workflow/).
 
 ### All Features at a Glance
 

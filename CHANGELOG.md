@@ -15,6 +15,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Cross-runtime parity fixtures** — added shared Python/PHP/TypeScript contract tests for humanize, analyze, and AI detection behavior on the same fixtures.
 - **Responsible use guide** — added public guidance for honest detector interpretation, watermark-forensics boundaries, disclosure language, and production safeguards.
 - **Benchmark methodology** — added public reporting rules for corpora, built-in detector metrics, quality dimensions, latency p50/p95, watermark evaluation, and release snapshots.
+- **Private offline workflow example** — added a runnable local audit -> safe cleanup -> strict/minimal humanize -> audit example with network blocking and preservation checks.
 
 ### Changed
 - **Safer default preservation** — numeric values are protected by default and semantic placeholders are inline-safe, allowing text around protected values to still be improved.
