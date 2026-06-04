@@ -1702,7 +1702,7 @@ See the full [Responsible Use guide](https://ksanyok.github.io/TextHumanize/resp
 | **Integration** | Python SDK · JS SDK · PHP SDK · CLI · REST API · Docker · SSE streaming |
 | **Reliability** | 2,356 tests across 3 platforms, CI/CD with ruff + mypy |
 | **No vendor lock-in** | Zero dependencies. No cloud APIs, no API keys, no rate limits |
-| **Language coverage** | 14 full language packs + universal processor for any language |
+| **Language coverage** | 25 language packs + universal processor for any language |
 | **Self-hosted** | Docker image, pip install, on-premise deployment |
 | **Content quality gate** | `quality_gate.py` for CI/CD pipeline integration |
 | **Custom training** | Train from your own corpus with `dict_trainer` and `training.py` |
@@ -1823,6 +1823,9 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and PR guidelines.
 
 **Areas for contribution:** New language packs · Improved synonym dictionaries · Better grammar rules · Performance optimizations · Additional integrations
+
+Starter tasks with acceptance criteria are listed in the
+[Good First Issues guide](https://ksanyok.github.io/TextHumanize/contributing/good-first-issues/).
 
 See [CONTRIBUTORS.md](CONTRIBUTORS.md) for the full list of contributors.
 

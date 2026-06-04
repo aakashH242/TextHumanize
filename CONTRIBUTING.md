@@ -51,15 +51,15 @@ mypy texthumanize/ --ignore-missing-imports
 texthumanize/          # Main package
 ├── __init__.py        # Public API (PEP 562 lazy loading)
 ├── core.py            # humanize(), detect_ai(), and other top-level functions
-├── pipeline.py        # 20-stage processing pipeline
+├── pipeline.py        # 38-stage processing pipeline
 ├── exceptions.py      # Exception hierarchy
 ├── lang/              # Language-specific dictionaries (RU, EN, DE, FR, ES, …)
 ├── detectors.py       # AI detection heuristics
-└── ...                # 60+ specialized modules
-tests/                 # pytest test suite (1700+ tests)
+└── ...                # 120+ specialized modules
+tests/                 # pytest test suite (2100+ tests)
 php/                   # PHP port
 examples/              # Usage examples
-docs/                  # Documentation (if present)
+docs-src/              # MkDocs documentation source
 ```
 
 ## Pull Request Guidelines
@@ -76,6 +76,12 @@ docs/                  # Documentation (if present)
 1. Create `texthumanize/lang/<code>.py` with synonyms, collocations, and fillers.
 2. Register the language in `texthumanize/lang/__init__.py`.
 3. Add tests in `tests/test_multilang.py`.
+
+## Good First Issues
+
+See the public [Good First Issues guide](https://ksanyok.github.io/TextHumanize/contributing/good-first-issues/)
+for scoped starter tasks covering language packs, AI marker packs, fixtures,
+watermark samples, documentation examples, and bad-output regression tests.
 
 ## Reporting Bugs
 

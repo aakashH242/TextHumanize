@@ -82,6 +82,8 @@ nav:
   - Architecture: architecture.md
   - Benchmark Methodology: benchmark-methodology.md
   - Responsible Use: responsible-use.md
+  - Contributing:
+    - Good First Issues: contributing/good-first-issues.md
   - Changelog: changelog.md
   - License: license.md
 
