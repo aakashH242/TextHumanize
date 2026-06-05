@@ -99,6 +99,13 @@ for _full, _short in _CONTRACTION_MAP.items():
     _CONTRACTION_PATTERNS.append((_pat, _full, _short))
 
 
+def _lower_first(text: str) -> str:
+    """Lowercase only the first character."""
+    if not text:
+        return text
+    return text[0].lower() + text[1:]
+
+
 def inject_contractions(
     text: str,
     probability: float = 0.75,
@@ -264,6 +271,85 @@ def reshape_sentence_lengths(
         result.append(sent)
 
     return " ".join(result)
+
+
+_MERGE_CONNECTORS: dict[str, list[str]] = {
+    "en": [", and ", ", while ", ", so "],
+    "ru": [", и ", ", а ", ", поэтому "],
+    "uk": [", і ", ", а ", ", тому "],
+}
+
+
+def merge_short_sentences(
+    text: str,
+    lang: str = "en",
+    rng: random.Random | None = None,
+    intensity: float = 0.5,
+) -> str:
+    """Merge adjacent short declarative sentences into natural clauses.
+
+    This counters overly choppy output while preserving questions,
+    exclamations, numbers, and paragraph boundaries.
+    """
+    connectors = _MERGE_CONNECTORS.get(lang)
+    if connectors is None:
+        return text
+    if rng is None:
+        rng = random.Random()
+
+    sentences = split_sentences(text, lang)
+    if len(sentences) < 3:
+        return text
+
+    lengths = [len(s.split()) for s in sentences]
+    short_ratio = sum(1 for length in lengths if 3 <= length <= 8) / len(lengths)
+    if short_ratio < 0.45:
+        return text
+
+    result: list[str] = []
+    merges = 0
+    max_merges = max(1, int(len(sentences) * 0.2))
+    i = 0
+    while i < len(sentences):
+        current = sentences[i].strip()
+        if (
+            i < len(sentences) - 1
+            and merges < max_merges
+            and rng.random() < intensity * 0.45
+        ):
+            nxt = sentences[i + 1].strip()
+            if _can_merge_short_pair(current, nxt):
+                connector = rng.choice(connectors)
+                merged = (
+                    current.rstrip(".")
+                    + connector
+                    + _lower_first(nxt.rstrip("."))
+                    + "."
+                )
+                result.append(merged)
+                merges += 1
+                i += 2
+                continue
+
+        result.append(current)
+        i += 1
+
+    return " ".join(result)
+
+
+def _can_merge_short_pair(first: str, second: str) -> bool:
+    """Return True when two short sentences can be safely joined."""
+    if not first.endswith(".") or not second.endswith("."):
+        return False
+    if re.search(r'\d', first) or re.search(r'\d', second):
+        return False
+    first_words = first.rstrip(".").split()
+    second_words = second.rstrip(".").split()
+    if not (3 <= len(first_words) <= 8 and 3 <= len(second_words) <= 8):
+        return False
+    if second_words and second_words[0].isupper() and len(second_words[0]) <= 3:
+        return False
+    return True
 
 
 def _try_split_at_conjunction(
@@ -1272,6 +1358,18 @@ class SentenceRestructurer:
             )
             if text != before:
                 self._record_change("length_reshaping", "Reshaped sentence-length distribution")
+
+        # 3b. Merge over-choppy short sentences
+        if prob >= 0.3:
+            before = text
+            text = merge_short_sentences(
+                text,
+                self.lang,
+                rng=self._rng,
+                intensity=prob,
+            )
+            if text != before:
+                self._record_change("sentence_merge", "Merged short adjacent sentences")
 
         # 4. Discourse markers (medium intensity)
         if prob >= 0.35:
