@@ -1445,6 +1445,7 @@ limitations.
 > ```bash
 > python benchmarks/run_benchmark.py
 > texthumanize benchmark --json
+> python scripts/profile_hot_paths.py --sizes 1000,10000,100000 --json
 > ```
 
 ---
