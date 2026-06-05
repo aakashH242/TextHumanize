@@ -25,6 +25,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - **Safer default preservation** — numeric values are protected by default and semantic placeholders are inline-safe, allowing text around protected values to still be improved.
+- **Runtime caching** — language pack lookup and standard debureaucratizer regex patterns are now cached, and sentence-validator hot regexes are compiled once at import time.
 - **Anti-overhumanize final guard** — the pipeline now trims stacked conversational fillers, repeated discourse markers, and excessive expressive punctuation introduced by late humanization passes.
 - **Collocation-safe word replacement** — word-level naturalization now rejects candidates that would break a strong local collocation and falls back to a better supported synonym when available.
 - **Syntax restructuring** — sentence restructuring now merges over-choppy adjacent short sentences into safe clauses while preserving questions, exclamations, and numeric facts.

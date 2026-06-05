@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 import random
 import re
+from collections.abc import Mapping, Sequence
+from functools import lru_cache
 
 from texthumanize.lang import get_lang_pack
 from texthumanize.morphology import get_morphology
@@ -108,6 +110,49 @@ _CONTEXT_GUARDS = _build_context_guards()
 
 # Context window: how many characters left/right to inspect
 _CONTEXT_WINDOW = 80
+
+_CompiledReplacement = tuple[str, re.Pattern[str], Sequence[str]]
+
+
+def _build_phrase_patterns(lang_pack: Mapping[str, object]) -> tuple[_CompiledReplacement, ...]:
+    phrases = lang_pack.get("bureaucratic_phrases", {})
+    if not isinstance(phrases, Mapping):
+        return ()
+    sorted_phrases = sorted(phrases.items(), key=lambda x: len(str(x[0])), reverse=True)
+    return tuple(
+        (
+            str(phrase),
+            re.compile(r'\b' + re.escape(str(phrase)) + r'\b', re.IGNORECASE),
+            replacements,
+        )
+        for phrase, replacements in sorted_phrases
+        if isinstance(replacements, Sequence) and not isinstance(replacements, str)
+    )
+
+
+def _build_word_patterns(lang_pack: Mapping[str, object]) -> tuple[_CompiledReplacement, ...]:
+    words = lang_pack.get("bureaucratic", {})
+    if not isinstance(words, Mapping):
+        return ()
+    return tuple(
+        (
+            str(word),
+            re.compile(r'\b' + re.escape(str(word)) + r'\b', re.IGNORECASE),
+            replacements,
+        )
+        for word, replacements in words.items()
+        if isinstance(replacements, Sequence) and not isinstance(replacements, str)
+    )
+
+
+@lru_cache(maxsize=64)
+def _get_compiled_phrase_patterns(lang: str) -> tuple[_CompiledReplacement, ...]:
+    return _build_phrase_patterns(get_lang_pack(lang))
+
+
+@lru_cache(maxsize=64)
+def _get_compiled_word_patterns(lang: str) -> tuple[_CompiledReplacement, ...]:
+    return _build_word_patterns(get_lang_pack(lang))
 
 
 def _is_replacement_safe(
@@ -217,12 +262,13 @@ class Debureaucratizer:
 
     def _replace_phrases(self, text: str, prob: float) -> str:
         """Заменить фразовые канцеляризмы."""
-        phrases = self.lang_pack.get("bureaucratic_phrases", {})
+        compiled_phrases = (
+            _get_compiled_phrase_patterns(self.lang)
+            if self.lang_pack is get_lang_pack(self.lang)
+            else _build_phrase_patterns(self.lang_pack)
+        )
 
-        # Сортируем по длине (длинные фразы первыми)
-        sorted_phrases = sorted(phrases.items(), key=lambda x: len(x[0]), reverse=True)
-
-        for phrase, replacements in sorted_phrases:
+        for phrase, pattern, replacements in compiled_phrases:
             # Проверяем бюджет замен
             if self._changes_made >= self._max_changes:
                 break
@@ -230,11 +276,6 @@ class Debureaucratizer:
             if not coin_flip(prob, self.rng):
                 continue
 
-            # Ищем фразу с учётом регистра первой буквы
-            # \b предотвращает совпадение внутри слов (напр. "є" внутри "Немає")
-            pattern = re.compile(
-                r'\b' + re.escape(phrase) + r'\b', re.IGNORECASE,
-            )
             matches = list(pattern.finditer(text))
 
             for match in matches:
@@ -273,9 +314,13 @@ class Debureaucratizer:
 
     def _replace_words(self, text: str, prob: float) -> str:
         """Заменить однословные канцеляризмы."""
-        words = self.lang_pack.get("bureaucratic", {})
+        compiled_words = (
+            _get_compiled_word_patterns(self.lang)
+            if self.lang_pack is get_lang_pack(self.lang)
+            else _build_word_patterns(self.lang_pack)
+        )
 
-        for word, replacements in words.items():
+        for word, pattern, replacements in compiled_words:
             # Проверяем бюджет замен
             if self._changes_made >= self._max_changes:
                 break
@@ -283,8 +328,6 @@ class Debureaucratizer:
             if not coin_flip(prob, self.rng):
                 continue
 
-            # Паттерн: целое слово, с учётом регистра
-            pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
             matches = list(pattern.finditer(text))
 
             for match in reversed(matches):  # Обратный порядок, чтобы не сбить индексы

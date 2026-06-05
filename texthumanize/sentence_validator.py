@@ -104,6 +104,22 @@ _SHORT_OK: dict[str, frozenset[str]] = {
 }
 
 _WORD_RE = re.compile(r'[a-zA-Zа-яА-ЯёЁіїєґІЇЄҐüöäßÜÖÄ\'-]+')
+_DE_ARTICLE_VERB_RE = re.compile(
+    r'\b(der|die|das|dem|den|des)\s+'
+    r'[A-ZÄÖÜ][a-zäöüß]*(?:en|ern|eln)\b'
+)
+_EN_ARTICLE_PREP_RE = re.compile(
+    r'\b(the|a|an)\s+(of|in|on|at|by|from|for|with|to)\b',
+    re.IGNORECASE,
+)
+_DOUBLE_CONJ_RE = re.compile(
+    r'\b(and|but|or|yet|so|и|і|а|але|но|und|oder|aber'
+    r'|et|ou|mais|y|o|pero)\s+\1\b',
+    re.IGNORECASE,
+)
+_SENT_BOUNDARY_RE = re.compile(
+    r'(?<=[.!?»"])\s+(?=[A-ZА-ЯІЇЄҐÜÖÄÉÈÊÀÂ«"])'
+)
 
 
 # ── Result ────────────────────────────────────────────────────
@@ -300,13 +316,9 @@ class SentenceValidator:
         # ── 8. Article-noun splits (DE) ──────────────────────
         if self.lang == 'de':
             # "die Beachten" pattern: article + infinitive as noun
-            _de_article_verb = re.compile(
-                r'\b(der|die|das|dem|den|des)\s+'
-                r'[A-ZÄÖÜ][a-zäöüß]*(?:en|ern|eln)\b'
-            )
-            if _de_article_verb.search(sent):
+            if _DE_ARTICLE_VERB_RE.search(sent):
                 # Check if the "noun" is actually a verb infinitive
-                m = _de_article_verb.search(sent)
+                m = _DE_ARTICLE_VERB_RE.search(sent)
                 if m:
                     candidate = m.group().split()[-1].lower()
                     _noun_suffixes = (
@@ -319,21 +331,12 @@ class SentenceValidator:
         # ── 9. Missing noun: "the of", "the in" ─────────────
         # Article followed directly by a preposition (missing content noun)
         if self.lang == 'en':
-            _art_prep = re.compile(
-                r'\b(the|a|an)\s+(of|in|on|at|by|from|for|with|to)\b',
-                re.IGNORECASE,
-            )
-            if _art_prep.search(sent):
-                return f"missing_noun: «{_art_prep.search(sent).group()}»"
+            if _EN_ARTICLE_PREP_RE.search(sent):
+                return f"missing_noun: «{_EN_ARTICLE_PREP_RE.search(sent).group()}»"
 
         # ── 10. Double conjunction ("and and", "but but") ────
-        _dup_conj = re.compile(
-            r'\b(and|but|or|yet|so|и|і|а|але|но|und|oder|aber'
-            r'|et|ou|mais|y|o|pero)\s+\1\b',
-            re.IGNORECASE,
-        )
-        if _dup_conj.search(sent):
-            return f"double_conj: «{_dup_conj.search(sent).group()}»"
+        if _DOUBLE_CONJ_RE.search(sent):
+            return f"double_conj: «{_DOUBLE_CONJ_RE.search(sent).group()}»"
 
         return None
 
@@ -343,8 +346,5 @@ class SentenceValidator:
         if not text.strip():
             return [text]
         # Use a universal sentence-boundary pattern
-        parts = re.split(
-            r'(?<=[.!?»"])\s+(?=[A-ZА-ЯІЇЄҐÜÖÄÉÈÊÀÂ«"])',
-            text,
-        )
+        parts = _SENT_BOUNDARY_RE.split(text)
         return [p for p in parts if p.strip()]

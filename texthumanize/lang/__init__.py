@@ -60,6 +60,8 @@ LANGUAGES = {
     "vi": LANG_VI,
 }
 
+_LANG_PACK_CACHE: dict[str, dict] = {}
+
 # ── Language tiers ─────────────────────────────────────────
 
 # Tier 1: Full detection + full humanization (deep grammar, syntax rewriting)
@@ -109,12 +111,21 @@ def get_lang_pack(lang: str) -> dict:
     Для остальных — пустой минимальный пакет, обработка идёт через
     универсальный процессор и натурализатор.
     """
-    if lang in LANGUAGES:
-        return LANGUAGES[lang]
+    cache_key = (lang or "unknown").lower()
+    cached = _LANG_PACK_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
+    if cache_key in LANGUAGES:
+        pack = LANGUAGES[cache_key]
+        _LANG_PACK_CACHE[cache_key] = pack
+        return pack
+
     # Для неизвестных языков — пустой пакет (обработка через universal.py)
     pack = dict(_EMPTY_LANG_PACK)
-    pack["code"] = lang
-    pack["name"] = lang.upper()
+    pack["code"] = cache_key
+    pack["name"] = cache_key.upper()
+    _LANG_PACK_CACHE[cache_key] = pack
     return pack
 
 
