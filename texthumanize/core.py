@@ -297,6 +297,21 @@ def humanize(
         if cached is not None:
             return cast(HumanizeResult, cached)
 
+    fast_path_result = _try_short_text_fast_path(
+        text,
+        detected_lang,
+        options,
+        has_custom_controls=bool(preserve) or bool(constraints) or quality_gate is not None,
+    )
+    if fast_path_result is not None and not (only_flagged or minimal or phantom):
+        fast_path_result = _attach_humanize_explain(fast_path_result, detected_lang)
+        if seed is not None:
+            result_cache.put(
+                text, fast_path_result, lang=detected_lang, profile=profile,
+                intensity=intensity, seed=seed, phantom=phantom,
+            )
+        return fast_path_result
+
     # Запускаем пайплайн
     pipeline = Pipeline(options=options)
 
@@ -680,7 +695,135 @@ _HUMANIZE_CHANGE_GUIDANCE: dict[str, tuple[str, str]] = {
         "Final artifact cleanup",
         "Removed late-stage connector or punctuation artifacts.",
     ),
+    "fast_path": (
+        "Short-text fast path",
+        "Skipped heavy pipeline stages because the short input had no strong AI-like marker.",
+    ),
 }
+
+_SHORT_FAST_PATH_MAX_CHARS = 320
+_SHORT_FAST_PATH_MAX_WORDS = 45
+_SHORT_FAST_PATH_MAX_INTENSITY = 60
+_SHORT_FAST_PATH_MARKERS = (
+    "furthermore",
+    "moreover",
+    "additionally",
+    "nevertheless",
+    "consequently",
+    "it is important to note",
+    "it should be noted",
+    "comprehensive",
+    "implementation",
+    "methodology",
+    "utilization",
+    "facilitates",
+    "significant",
+    "оптимизац",
+    "необходимо отметить",
+    "следует отметить",
+    "данный",
+    "является",
+    "безусловно",
+    "необхідно зазначити",
+    "слід зазначити",
+    "даний",
+    "являє собою",
+)
+
+
+def _short_text_fast_path_risk(text: str) -> str | None:
+    """Return a reason to skip the short-text fast path, or None if safe."""
+    stripped = text.strip()
+    if len(stripped) > _SHORT_FAST_PATH_MAX_CHARS:
+        return "too_long"
+
+    words = re.findall(r"\b[\w'-]+\b", stripped, flags=re.UNICODE)
+    if len(words) > _SHORT_FAST_PATH_MAX_WORDS:
+        return "too_many_words"
+    if stripped.count("\n\n") > 0:
+        return "multi_paragraph"
+
+    lowered = stripped.lower()
+    for marker in _SHORT_FAST_PATH_MARKERS:
+        if marker in lowered:
+            return f"ai_marker:{marker}"
+
+    sentence_count = len(re.findall(r"[.!?]+", stripped))
+    if sentence_count >= 4:
+        return "many_short_sentences"
+    if re.search(r"\b(\w{4,})\b(?:\W+\b\1\b){1,}", lowered):
+        return "repeated_word"
+    return None
+
+
+def _fast_path_metrics(text: str, artificiality_score: float) -> dict[str, Any]:
+    words = re.findall(r"\b[\w'-]+\b", text, flags=re.UNICODE)
+    sentences = _sentence_spans(text)
+    return {
+        "total_chars": len(text),
+        "total_words": len(words),
+        "total_sentences": len(sentences),
+        "artificiality_score": artificiality_score,
+        "connector_ratio": 0.0,
+        "bureaucratic_ratio": 0.0,
+        "repetition_score": 0.0,
+        "predictability_score": 0.0,
+    }
+
+
+def _try_short_text_fast_path(
+    text: str,
+    lang: str,
+    options: HumanizeOptions,
+    *,
+    has_custom_controls: bool,
+) -> HumanizeResult | None:
+    """Return a lightweight result for low-risk short text, else None."""
+    if has_custom_controls:
+        return None
+    if options.target_style is not None or options.custom_dict:
+        return None
+    if options.constraints.get("quality_gate") == "strict":
+        return None
+    if options.intensity > _SHORT_FAST_PATH_MAX_INTENSITY:
+        return None
+
+    skip_reason = _short_text_fast_path_risk(text)
+    if skip_reason is not None:
+        return None
+
+    from texthumanize.normalizer import TypographyNormalizer
+
+    normalizer = TypographyNormalizer(profile=options.profile, lang=lang)
+    normalized = normalizer.normalize(text)
+    changes = list(normalizer.changes)
+    changes.append({
+        "type": "fast_path",
+        "description": (
+            "Short low-risk text skipped heavy humanization stages; "
+            "typography cleanup only."
+        ),
+    })
+    metrics_before = _fast_path_metrics(text, artificiality_score=8.0)
+    metrics_after = {
+        **_fast_path_metrics(normalized, artificiality_score=8.0),
+        "fast_path": {
+            "enabled": True,
+            "max_chars": _SHORT_FAST_PATH_MAX_CHARS,
+            "max_words": _SHORT_FAST_PATH_MAX_WORDS,
+            "skipped_heavy_stages": True,
+        },
+    }
+    return HumanizeResult(
+        original=text,
+        text=normalized,
+        lang=lang,
+        profile=options.profile,
+        intensity=options.intensity,
+        changes=changes,
+        metrics_before=metrics_before,
+        metrics_after=metrics_after,
+    )
 
 
 def _change_reason_key(change_type: str) -> str:
