@@ -35,6 +35,18 @@ def test_short_ai_like_marker_disables_fast_path() -> None:
     ) is None
 
 
+def test_short_unicode_marker_disables_fast_path() -> None:
+    text = "This\u200b text has hidden markers."
+
+    assert _short_text_fast_path_risk(text) == "unicode_marker"
+    assert _try_short_text_fast_path(
+        text,
+        "en",
+        HumanizeOptions(lang="en"),
+        has_custom_controls=False,
+    ) is None
+
+
 def test_short_fast_path_respects_custom_controls() -> None:
     text = "I checked the draft and fixed two awkward lines."
 

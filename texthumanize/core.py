@@ -742,6 +742,8 @@ def _short_text_fast_path_risk(text: str) -> str | None:
         return "too_many_words"
     if stripped.count("\n\n") > 0:
         return "multi_paragraph"
+    if any(unicodedata.category(ch) in {"Cf", "Cc"} for ch in stripped):
+        return "unicode_marker"
 
     lowered = stripped.lower()
     for marker in _SHORT_FAST_PATH_MARKERS:
