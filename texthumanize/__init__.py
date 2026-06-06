@@ -71,6 +71,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     # core.py
     "humanize": ("texthumanize.core", "humanize"),
     "humanize_batch": ("texthumanize.core", "humanize_batch"),
+    "humanize_batch_stream": ("texthumanize.core", "humanize_batch_stream"),
     "humanize_chunked": ("texthumanize.core", "humanize_chunked"),
     "humanize_until_human": ("texthumanize.core", "humanize_until_human"),
     "humanize_sentences": ("texthumanize.core", "humanize_sentences"),
@@ -497,6 +498,7 @@ __all__ = [
     "humanize",
     "humanize_ai",
     "humanize_batch",
+    "humanize_batch_stream",
     "humanize_chunked",
     "humanize_sentences",
     "humanize_stream",

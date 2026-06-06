@@ -22,11 +22,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Idiolect style presets** — expanded `target_style` with editor/founder/expert/support personas plus RU aliases such as `редактор`, `основатель`, `эксперт`, `журналист`, and `студент`.
 - **ASH corpus profiles** — added corpus-level target distributions for web, SEO, marketing, support, academic, formal, docs, social/chat, editorial, founder, expert, and student signatures, including sentence length, punctuation, connector variety, hedge words, and colloquial turns.
 - **Hot-path profiler** — added `scripts/profile_hot_paths.py` to measure p50/p95 latency on deterministic 1k, 10k, and 100k character inputs for release performance tracking.
+- **Memory-bounded streaming batch** — added `humanize_batch_stream()` plus `memory_limit_mb` guards for batch, chunked, and stream processing.
 
 ### Changed
 - **Safer default preservation** — numeric values are protected by default and semantic placeholders are inline-safe, allowing text around protected values to still be improved.
 - **Runtime caching** — language pack lookup and standard debureaucratizer regex patterns are now cached, and sentence-validator hot regexes are compiled once at import time.
 - **Short-text fast path** — low-risk short inputs can skip heavy humanization stages and run typography-only cleanup while preserving the normal `HumanizeResult` shape.
+- **Chunked streaming internals** — chunked and streaming humanization now process chunks through a generator instead of materializing the full chunk list in sequential mode.
 - **Anti-overhumanize final guard** — the pipeline now trims stacked conversational fillers, repeated discourse markers, and excessive expressive punctuation introduced by late humanization passes.
 - **Collocation-safe word replacement** — word-level naturalization now rejects candidates that would break a strong local collocation and falls back to a better supported synonym when available.
 - **Syntax restructuring** — sentence restructuring now merges over-choppy adjacent short sentences into safe clauses while preserving questions, exclamations, and numeric facts.

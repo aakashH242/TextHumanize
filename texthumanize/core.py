@@ -9,7 +9,7 @@ import math
 import re
 import threading
 import unicodedata
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Sized
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Any, cast
 
@@ -26,6 +26,31 @@ if TYPE_CHECKING:
     from texthumanize.stylistic import StylisticFingerprint
 
 logger = logging.getLogger(__name__)
+
+_MEMORY_LIMIT_OVERHEAD_FACTOR = 2.5
+
+
+def _memory_limit_bytes(memory_limit_mb: float | None) -> int | None:
+    """Normalize an optional memory limit to bytes."""
+    if memory_limit_mb is None:
+        return None
+    if memory_limit_mb <= 0:
+        raise ConfigError("memory_limit_mb must be positive")
+    return int(memory_limit_mb * 1024 * 1024)
+
+
+def _estimated_text_bytes(text: str) -> int:
+    """Conservative in-memory estimate for one Python text string."""
+    return int(len(text.encode("utf-8")) * _MEMORY_LIMIT_OVERHEAD_FACTOR)
+
+
+def _ensure_memory_window(active_bytes: int, limit_bytes: int | None, label: str) -> None:
+    """Raise ConfigError if the active processing window exceeds a limit."""
+    if limit_bytes is not None and active_bytes > limit_bytes:
+        raise ConfigError(
+            f"{label} memory window exceeds memory_limit_mb: "
+            f"{active_bytes:,} estimated bytes > {limit_bytes:,}"
+        )
 
 # ─── Generic lazy module loader ──────────────────────────────
 
@@ -1465,6 +1490,7 @@ def humanize_chunked(
     constraints: dict | None = None,
     seed: int | None = None,
     max_workers: int | None = None,
+    memory_limit_mb: float | None = None,
 ) -> HumanizeResult:
     """Process large texts by splitting into manageable chunks.
 
@@ -1483,6 +1509,9 @@ def humanize_chunked(
         seed: Random seed for reproducibility.
         max_workers: Number of parallel workers (None = sequential,
             1 = sequential, 2+ = parallel threads).
+        memory_limit_mb: Optional estimated active-window memory limit.
+            Sequential mode validates one chunk at a time; parallel mode
+            validates all submitted chunks.
 
     Returns:
         HumanizeResult with the fully processed text.
@@ -1503,9 +1532,7 @@ def humanize_chunked(
             preserve=preserve, constraints=constraints, seed=seed,
         )
 
-    # Split into paragraph-based chunks (overlap applied between adjacent chunks)
-    chunks = _split_into_chunks(text, chunk_size, overlap=overlap)
-
+    limit_bytes = _memory_limit_bytes(memory_limit_mb)
     detected_lang = lang
     if lang == "auto":
         detected_lang = detect_language(text[:2000])
@@ -1524,33 +1551,57 @@ def humanize_chunked(
         )
         return (i, result)
 
-    indexed_chunks = list(enumerate(chunks))
-    results_map: dict[int, HumanizeResult] = {}
-
-    if max_workers and max_workers >= 2 and len(chunks) > 1:
+    ordered: list[HumanizeResult] = []
+    if max_workers and max_workers >= 2:
+        chunks = list(_iter_text_chunks(text, chunk_size, overlap=overlap))
+        _ensure_memory_window(
+            sum(_estimated_text_bytes(chunk) for chunk in chunks),
+            limit_bytes,
+            "humanize_chunked parallel chunks",
+        )
         # Параллельная обработка
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {
-                executor.submit(_process_chunk, ic): ic[0]
-                for ic in indexed_chunks
-            }
-            for future in as_completed(futures):
-                idx, result = future.result()
-                results_map[idx] = result
+        results_map: dict[int, HumanizeResult] = {}
+        indexed_chunks = list(enumerate(chunks))
+        if len(indexed_chunks) == 1:
+            _idx, result = _process_chunk(indexed_chunks[0])
+            ordered = [result]
+        else:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = {
+                    executor.submit(_process_chunk, ic): ic[0]
+                    for ic in indexed_chunks
+                }
+                for future in as_completed(futures):
+                    idx, result = future.result()
+                    results_map[idx] = result
+            ordered = [results_map[i] for i in range(len(chunks))]
     else:
-        # Последовательная обработка
-        for ic in indexed_chunks:
-            idx, result = _process_chunk(ic)
-            results_map[idx] = result
+        for idx, chunk in enumerate(_iter_text_chunks(text, chunk_size, overlap=overlap)):
+            _ensure_memory_window(
+                _estimated_text_bytes(chunk),
+                limit_bytes,
+                "humanize_chunked chunk",
+            )
+            _idx, result = _process_chunk((idx, chunk))
+            ordered.append(result)
 
     # Собираем в порядке
-    ordered = [results_map[i] for i in range(len(chunks))]
     all_processed = [r.text for r in ordered]
     all_changes: list[dict] = []
     for r in ordered:
         all_changes.extend(r.changes)
 
     processed_text = "\n\n".join(all_processed)
+    metrics_after: dict[str, Any] = {
+        "memory_bounded": {
+            "enabled": memory_limit_mb is not None,
+            "memory_limit_mb": memory_limit_mb,
+            "chunk_size": chunk_size,
+            "overlap": overlap,
+            "chunks": len(ordered),
+            "max_workers": max_workers or 1,
+        }
+    }
 
     return HumanizeResult(
         original=text,
@@ -1559,7 +1610,70 @@ def humanize_chunked(
         profile=profile,
         intensity=intensity,
         changes=all_changes,
+        metrics_after=metrics_after,
     )
+
+
+def humanize_batch_stream(
+    texts: Iterable[str],
+    lang: str = "auto",
+    profile: str = "web",
+    intensity: int = 60,
+    preserve: dict | None = None,
+    constraints: dict | None = None,
+    seed: int | None = None,
+    memory_limit_mb: float | None = None,
+) -> Generator[dict[str, Any], None, None]:
+    """Stream batch humanization results with a bounded active memory window."""
+    limit_bytes = _memory_limit_bytes(memory_limit_mb)
+    total = len(texts) if isinstance(texts, Sized) else None
+
+    for idx, text in enumerate(texts):
+        _ensure_memory_window(
+            _estimated_text_bytes(text),
+            limit_bytes,
+            "humanize_batch_stream input",
+        )
+        item_seed = seed + idx if seed is not None else None
+        result = humanize(
+            text,
+            lang=lang,
+            profile=profile,
+            intensity=intensity,
+            preserve=preserve,
+            constraints=constraints,
+            seed=item_seed,
+        )
+        _ensure_memory_window(
+            _estimated_text_bytes(text) + _estimated_text_bytes(result.text),
+            limit_bytes,
+            "humanize_batch_stream result",
+        )
+        result = HumanizeResult(
+            original=result.original,
+            text=result.text,
+            lang=result.lang,
+            profile=result.profile,
+            intensity=result.intensity,
+            changes=result.changes,
+            metrics_before=result.metrics_before,
+            metrics_after={
+                **result.metrics_after,
+                "memory_bounded": {
+                    "enabled": memory_limit_mb is not None,
+                    "memory_limit_mb": memory_limit_mb,
+                    "mode": "batch_stream",
+                    "index": idx,
+                    "total": total,
+                },
+            },
+        )
+        yield {
+            "index": idx,
+            "total": total,
+            "is_last": total is not None and idx == total - 1,
+            "result": result,
+        }
 
 
 def humanize_batch(
@@ -1572,6 +1686,7 @@ def humanize_batch(
     seed: int | None = None,
     on_progress: Callable[[int, int, HumanizeResult], None] | None = None,
     max_workers: int | None = None,
+    memory_limit_mb: float | None = None,
 ) -> list[HumanizeResult]:
     """Гуманизировать несколько текстов за один вызов.
 
@@ -1590,11 +1705,33 @@ def humanize_batch(
             Принимает (current_index, total_count, result).
         max_workers: Число потоков (None/1 = последовательно, 2+ = параллельно).
             Внимание: при max_workers > 1 on_progress может вызываться не по порядку.
+        memory_limit_mb: Optional estimated active-window memory limit. When set,
+            batch uses the streaming sequential path to avoid submitting the
+            entire batch to worker threads at once.
 
     Returns:
         Список HumanizeResult — по одному для каждого входного текста.
     """
     total = len(texts)
+
+    if memory_limit_mb is not None:
+        results: list[HumanizeResult] = []
+        for item in humanize_batch_stream(
+            texts,
+            lang=lang,
+            profile=profile,
+            intensity=intensity,
+            preserve=preserve,
+            constraints=constraints,
+            seed=seed,
+            memory_limit_mb=memory_limit_mb,
+        ):
+            idx = int(item["index"])
+            result = cast(HumanizeResult, item["result"])
+            if on_progress is not None:
+                on_progress(idx, total, result)
+            results.append(result)
+        return results
 
     def _process_item(idx: int) -> tuple[int, HumanizeResult]:
         item_seed = seed + idx if seed is not None else None
@@ -1630,28 +1767,36 @@ def humanize_batch(
     return [results_map[i] for i in range(total)]
 
 
-def _split_into_chunks(text: str, chunk_size: int, overlap: int = 0) -> list[str]:
-    """Split text at paragraph boundaries, respecting chunk_size.
+def _iter_text_chunks(
+    text: str,
+    chunk_size: int,
+    overlap: int = 0,
+) -> Generator[str, None, None]:
+    """Yield text chunks at paragraph boundaries without materializing all chunks.
 
     When *overlap* > 0, the last `overlap` characters of each chunk
     are prepended to the next chunk to preserve cross-boundary context.
     """
-    paragraphs = re.split(r'\n\s*\n', text)
-    chunks: list[str] = []
+    if chunk_size <= 0:
+        raise ConfigError("chunk_size must be positive")
+
     current: list[str] = []
     current_len = 0
+    yielded = False
 
-    for para in paragraphs:
+    for para in re.split(r'\n\s*\n', text):
         para = para.strip()
         if not para:
             continue
         para_len = len(para)
 
         if current_len + para_len > chunk_size and current:
-            chunks.append("\n\n".join(current))
+            chunk = "\n\n".join(current)
+            yielded = True
+            yield chunk
             # Overlap: carry trailing characters into next chunk
             if overlap > 0:
-                tail = chunks[-1][-overlap:]
+                tail = chunk[-overlap:]
                 current = [tail]
                 current_len = len(tail)
             else:
@@ -1662,9 +1807,35 @@ def _split_into_chunks(text: str, chunk_size: int, overlap: int = 0) -> list[str
         current_len += para_len
 
     if current:
-        chunks.append("\n\n".join(current))
+        yielded = True
+        yield "\n\n".join(current)
 
-    return chunks if chunks else [text]
+    if not yielded:
+        yield text
+
+
+def _count_text_chunks(text: str, chunk_size: int) -> int:
+    """Count stream chunks without storing their contents."""
+    if chunk_size <= 0:
+        raise ConfigError("chunk_size must be positive")
+    count = 0
+    current_size = 0
+    for para in re.split(r'\n\s*\n', text):
+        if current_size + len(para) >= chunk_size and current_size:
+            count += 1
+            current_size = 0
+        current_size += len(para)
+    if current_size or not text:
+        count += 1
+    return max(count, 1)
+
+
+def _split_into_chunks(text: str, chunk_size: int, overlap: int = 0) -> list[str]:
+    """Split text at paragraph boundaries, respecting chunk_size.
+
+    Compatibility wrapper around the streaming chunk iterator.
+    """
+    return list(_iter_text_chunks(text, chunk_size, overlap=overlap))
 
 
 _FORMAL_FALSE_POSITIVE_DOMAINS = {
@@ -3482,6 +3653,7 @@ def humanize_stream(
     preserve: dict | None = None,
     seed: int | None = None,
     chunk_size: int = 500,
+    memory_limit_mb: float | None = None,
 ) -> Generator[dict[str, Any], None, None]:
     """Stream humanized text in chunks (generator).
 
@@ -3496,6 +3668,7 @@ def humanize_stream(
         preserve: Preservation settings.
         seed: Random seed.
         chunk_size: Approximate characters per chunk.
+        memory_limit_mb: Optional estimated active-window memory limit.
 
     Yields:
         Dict with: chunk, chunk_index, is_last, progress (0.0-1.0),
@@ -3504,34 +3677,17 @@ def humanize_stream(
     if lang == "auto":
         lang = detect_language(text)
 
-    # Split into paragraphs
-    paragraphs = re.split(r'\n\s*\n', text)
-    if not paragraphs:
-        return
-
+    limit_bytes = _memory_limit_bytes(memory_limit_mb)
     total_chars = len(text)
     processed_chars = 0
-    chunk_index = 0
+    total_chunks = _count_text_chunks(text, chunk_size)
 
-    # Group paragraphs into chunks of approximate size
-    current_chunk = []
-    current_size = 0
-    chunks = []
-
-    for para in paragraphs:
-        current_chunk.append(para)
-        current_size += len(para)
-        if current_size >= chunk_size:
-            chunks.append("\n\n".join(current_chunk))
-            current_chunk = []
-            current_size = 0
-
-    if current_chunk:
-        chunks.append("\n\n".join(current_chunk))
-
-    total_chunks = len(chunks)
-
-    for i, chunk in enumerate(chunks):
+    for i, chunk in enumerate(_iter_text_chunks(text, chunk_size)):
+        _ensure_memory_window(
+            _estimated_text_bytes(chunk),
+            limit_bytes,
+            "humanize_stream chunk",
+        )
         result = humanize(
             chunk,
             lang=lang,
@@ -3540,18 +3696,27 @@ def humanize_stream(
             preserve=preserve,
             seed=seed + i if seed is not None else None,
         )
+        _ensure_memory_window(
+            _estimated_text_bytes(chunk) + _estimated_text_bytes(result.text),
+            limit_bytes,
+            "humanize_stream result",
+        )
 
         processed_chars += len(chunk)
-        chunk_index = i
 
         yield {
             "chunk": result.text,
-            "chunk_index": chunk_index,
+            "chunk_index": i,
             "total_chunks": total_chunks,
             "is_last": i == total_chunks - 1,
             "progress": min(1.0, processed_chars / total_chars) if total_chars > 0 else 1.0,
             "original_chunk": chunk,
             "change_ratio": round(result.change_ratio, 4),
+            "memory_bounded": {
+                "enabled": memory_limit_mb is not None,
+                "memory_limit_mb": memory_limit_mb,
+                "chunk_size": chunk_size,
+            },
         }
 
 

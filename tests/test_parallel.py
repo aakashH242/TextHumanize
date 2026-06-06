@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from texthumanize import humanize_batch, humanize_chunked
+from texthumanize import humanize_batch, humanize_batch_stream, humanize_chunked, humanize_stream
+from texthumanize.exceptions import ConfigError
 
 _SAMPLE = (
     "Artificial intelligence is rapidly evolving. Neural networks process "
@@ -78,6 +79,30 @@ class TestParallelBatch:
         for a, b in zip(r1, r2):
             assert a.text == b.text
 
+    def test_batch_stream_yields_ordered_results(self):
+        items = list(
+            humanize_batch_stream(
+                _BATCH[:2],
+                lang="en",
+                intensity=30,
+                seed=42,
+                memory_limit_mb=1,
+            )
+        )
+        assert [item["index"] for item in items] == [0, 1]
+        assert all(item["result"].text for item in items)
+        assert items[0]["result"].metrics_after["memory_bounded"]["enabled"] is True
+
+    def test_batch_memory_limit_rejects_oversized_item(self):
+        with pytest.raises(ConfigError, match="memory_limit_mb"):
+            list(
+                humanize_batch_stream(
+                    ["x" * 2000],
+                    lang="en",
+                    memory_limit_mb=0.001,
+                )
+            )
+
 
 class TestParallelChunked:
     """Tests for humanize_chunked with max_workers."""
@@ -122,6 +147,27 @@ class TestParallelChunked:
         # Changes from all chunks should be collected
         assert isinstance(result.changes, list)
 
+    def test_chunked_memory_limit_metadata(self):
+        long_text = "\n\n".join([_SAMPLE] * 3)
+        result = humanize_chunked(
+            long_text,
+            chunk_size=200,
+            lang="en",
+            intensity=30,
+            memory_limit_mb=1,
+        )
+        assert result.metrics_after["memory_bounded"]["enabled"] is True
+        assert result.metrics_after["memory_bounded"]["chunks"] >= 1
+
+    def test_chunked_memory_limit_rejects_large_chunk(self):
+        with pytest.raises(ConfigError, match="memory_limit_mb"):
+            humanize_chunked(
+                "x" * 2000,
+                chunk_size=100,
+                lang="en",
+                memory_limit_mb=0.001,
+            )
+
 
 class TestParallelPerformance:
     """Verify parallel processing doesn't break anything."""
@@ -147,3 +193,32 @@ class TestParallelPerformance:
         for r in results:
             assert r.text
             assert r.lang == "en"
+
+
+class TestStreamingMemory:
+    """Tests for memory-bounded humanize_stream."""
+
+    def test_stream_memory_metadata(self):
+        chunks = list(
+            humanize_stream(
+                "\n\n".join(_BATCH[:2]),
+                lang="en",
+                intensity=30,
+                chunk_size=80,
+                memory_limit_mb=1,
+            )
+        )
+        assert chunks
+        assert chunks[-1]["is_last"] is True
+        assert chunks[0]["memory_bounded"]["enabled"] is True
+
+    def test_stream_memory_limit_rejects_large_chunk(self):
+        with pytest.raises(ConfigError, match="memory_limit_mb"):
+            list(
+                humanize_stream(
+                    "x" * 2000,
+                    lang="en",
+                    chunk_size=100,
+                    memory_limit_mb=0.001,
+                )
+            )

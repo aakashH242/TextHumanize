@@ -269,7 +269,7 @@ to open a network connection. See the full
 from texthumanize import (
     # Core humanization
     humanize, humanize_batch, humanize_chunked, humanize_ai,
-    humanize_until_human, humanize_sentences, humanize_stream,
+    humanize_batch_stream, humanize_until_human, humanize_sentences, humanize_stream,
     humanize_variants,
     # AI detection
     detect_ai, detect_ai_explain, detect_ai_batch, detect_ai_sentences,
@@ -304,6 +304,8 @@ variants = spin_variants("Original text.", count=5, lang="en")
 # Batch + chunked processing
 results = humanize_batch(["Text 1", "Text 2"], lang="en", max_workers=4)
 result = humanize_chunked(large_doc, chunk_size=3000, lang="ru")
+for item in humanize_batch_stream(texts, lang="en", memory_limit_mb=128):
+    print(item["index"], item["result"].text)
 
 # Iterative humanization — keep rewriting until AI score drops
 result = humanize_until_human("AI text", lang="en", target_score=0.35)
@@ -721,15 +723,16 @@ print(report["per_language"]["en"]["avg_score_by_label"])
 ```python
 # Batch — parallel processing with thread pool
 results = humanize_batch(texts, lang="en", max_workers=4)
+bounded = humanize_batch(texts, lang="en", memory_limit_mb=128)
 
 # Chunked — split large documents
-result = humanize_chunked(large_doc, chunk_size=3000, lang="ru")
+result = humanize_chunked(large_doc, chunk_size=3000, lang="ru", memory_limit_mb=128)
 
 # Until human — loop until AI score drops below threshold
 result = humanize_until_human(text, lang="en", target_score=0.35, max_iterations=5)
 
 # Streaming — paragraph by paragraph
-for chunk in humanize_stream(text, lang="en"):
+for chunk in humanize_stream(text, lang="en", memory_limit_mb=128):
     print(chunk, end="", flush=True)
 
 # Variants — generate N different versions
@@ -1743,7 +1746,8 @@ See the full [Responsible Use guide](https://ksanyok.github.io/TextHumanize/resp
 | Mode | Description | Use Case |
 |:-----|:------------|:---------|
 | `humanize()` | Full 38-stage pipeline | General-purpose normalization |
-| `humanize_batch()` | Parallel processing (N workers) | Bulk content processing |
+| `humanize_batch()` | Parallel or memory-bounded batch processing | Bulk content processing |
+| `humanize_batch_stream()` | Generator-based batch results | Large queues with bounded memory |
 | `humanize_chunked()` | Split + process + rejoin | Documents > 10K chars |
 | `humanize_until_human()` | Iterative (loop until built-in target score) | High-quality output |
 | `humanize_stream()` | SSE paragraph streaming | Real-time UI |

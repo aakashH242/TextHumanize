@@ -176,13 +176,17 @@ readability = full_readability("Text.", lang="en")
 ## Batch Functions
 
 ```python
-from texthumanize import humanize_batch, humanize_chunked, detect_ai_batch
+from texthumanize import humanize_batch, humanize_batch_stream, humanize_chunked, detect_ai_batch
 
 # Parallel batch
 results = humanize_batch(["Text 1", "Text 2"], lang="en", max_workers=4)
 
+# Memory-bounded streaming batch
+for item in humanize_batch_stream(["Text 1", "Text 2"], lang="en", memory_limit_mb=128):
+    print(item["index"], item["result"].text)
+
 # Chunked (large documents)
-result = humanize_chunked(large_text, chunk_size=3000, lang="en")
+result = humanize_chunked(large_text, chunk_size=3000, lang="en", memory_limit_mb=128)
 
 # Batch AI detection
 results = detect_ai_batch(["Text 1", "Text 2"], lang="en")
@@ -193,7 +197,7 @@ results = detect_ai_batch(["Text 1", "Text 2"], lang="en")
 ```python
 from texthumanize import humanize_stream
 
-for chunk in humanize_stream("Long text...", lang="en"):
+for chunk in humanize_stream("Long text...", lang="en", memory_limit_mb=128):
     print(chunk, end="", flush=True)
 ```
 
