@@ -25,6 +25,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Memory-bounded streaming batch** — added `humanize_batch_stream()` plus `memory_limit_mb` guards for batch, chunked, and stream processing.
 
 ### Changed
+- **Cold-start lazy imports** — package import no longer performs distribution metadata lookup, and accessing core public functions no longer loads language packs, analyzers, detectors, or the full pipeline until execution needs them.
 - **Safer default preservation** — numeric values are protected by default and semantic placeholders are inline-safe, allowing text around protected values to still be improved.
 - **ReDoS hardening** — segmenter HTML protection now skips impossible paired-tag scans and precomputes placeholder spans per regex pass, with adversarial regex regression tests.
 - **Runtime caching** — language pack lookup and standard debureaucratizer regex patterns are now cached, and sentence-validator hot regexes are compiled once at import time.

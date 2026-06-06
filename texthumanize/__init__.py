@@ -41,13 +41,6 @@ import types as _types
 from typing import Any
 
 __version__ = "0.28.4"
-try:
-    from importlib.metadata import version as _meta_version
-    _dist_version = _meta_version("texthumanize")
-    if _dist_version == __version__:
-        __version__ = _dist_version
-except Exception:
-    pass
 __author__ = "TextHumanize Contributors"
 __license__ = "Personal Use Only"
 

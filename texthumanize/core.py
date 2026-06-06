@@ -13,16 +13,15 @@ from collections.abc import Callable, Iterable, Sized
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Any, cast
 
-from texthumanize.analyzer import TextAnalyzer
 from texthumanize.cache import result_cache
 from texthumanize.exceptions import ConfigError, InputTooLargeError
-from texthumanize.lang_detect import detect_language
-from texthumanize.pipeline import Pipeline
 from texthumanize.utils import AnalysisReport, DetectionReport, HumanizeOptions, HumanizeResult
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from texthumanize.analyzer import TextAnalyzer
+    from texthumanize.pipeline import Pipeline
     from texthumanize.stylistic import StylisticFingerprint
 
 logger = logging.getLogger(__name__)
@@ -126,6 +125,21 @@ def _get_word_embeddings() -> Any:
 
 def _get_hmm_tagger() -> Any:
     return _lazy_import("texthumanize.hmm_tagger")
+
+
+def _detect_language(text: str) -> str:
+    lang_mod = _lazy_import("texthumanize.lang_detect")
+    return cast(str, lang_mod.detect_language(text))
+
+
+def _new_pipeline(*, options: HumanizeOptions) -> Pipeline:
+    pipeline_mod = _lazy_import("texthumanize.pipeline")
+    return cast("Pipeline", pipeline_mod.Pipeline(options=options))
+
+
+def _new_text_analyzer(*, lang: str) -> TextAnalyzer:
+    analyzer_mod = _lazy_import("texthumanize.analyzer")
+    return cast("TextAnalyzer", analyzer_mod.TextAnalyzer(lang=lang))
 
 
 def humanize(
@@ -292,7 +306,7 @@ def humanize(
     # Определяем язык
     detected_lang = lang
     if lang == "auto":
-        detected_lang = detect_language(text)
+        detected_lang = _detect_language(text)
 
     # Строим опции
     options = HumanizeOptions(
@@ -338,7 +352,7 @@ def humanize(
         return fast_path_result
 
     # Запускаем пайплайн
-    pipeline = Pipeline(options=options)
+    pipeline = _new_pipeline(options=options)
 
     # ── Selective humanization ────────────────────────────────
     if only_flagged or minimal:
@@ -459,7 +473,7 @@ def _humanize_via_backend(
     """
     detected_lang = lang
     if lang == "auto":
-        detected_lang = detect_language(text)
+        detected_lang = _detect_language(text)
 
     ab = _get_ai_backend()
 
@@ -527,7 +541,7 @@ def humanize_ai(
     3. Built-in rules (always available)
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     ab = _get_ai_backend()
     # LRU cache for backend instances (preserves circuit breaker state,
@@ -610,7 +624,7 @@ def _humanize_flagged_only(
     combined = "".join(parts)
 
     # Analyze before/after
-    analyzer_obj = TextAnalyzer(lang=lang)
+    analyzer_obj = _new_text_analyzer(lang=lang)
     metrics_before = analyzer_obj.analyze(text)
     metrics_after = analyzer_obj.analyze(combined)
 
@@ -1166,9 +1180,9 @@ def analyze(text: str, lang: str = "auto") -> AnalysisReport:
 
     detected_lang = lang
     if lang == "auto":
-        detected_lang = detect_language(text)
+        detected_lang = _detect_language(text)
 
-    analyzer = TextAnalyzer(lang=detected_lang)
+    analyzer = _new_text_analyzer(lang=detected_lang)
     return analyzer.analyze(text)
 
 
@@ -1293,7 +1307,7 @@ def humanize_until_human(
         HumanizeResult from the best (lowest AI score) attempt.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     best_result: HumanizeResult | None = None
     best_score = float("inf")
@@ -1535,7 +1549,7 @@ def humanize_chunked(
     limit_bytes = _memory_limit_bytes(memory_limit_mb)
     detected_lang = lang
     if lang == "auto":
-        detected_lang = detect_language(text[:2000])
+        detected_lang = _detect_language(text[:2000])
 
     def _process_chunk(idx_chunk: tuple[int, str]) -> tuple[int, HumanizeResult]:
         i, chunk = idx_chunk
@@ -2505,7 +2519,7 @@ def detect_ai(text: str, lang: str = "auto") -> DetectionReport:
         raise InputTooLargeError(len(text), MAX_DETECT_LENGTH)
 
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     det = _get_detectors()
     result = det.detect_ai(text, lang=lang)
@@ -2729,7 +2743,7 @@ def detect_ai_fast(text: str, lang: str = "auto") -> dict:
         return {"combined_score": 0.0, "verdict": "human", "confidence": 0.0}
 
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     try:
         nd_mod = _get_neural_detector()
@@ -2842,7 +2856,7 @@ def paraphrase(
         Перефразированный текст.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
     return str(_get_paraphrase().paraphrase_text(
         text, lang=lang, intensity=intensity, seed=seed
     ))
@@ -2867,7 +2881,7 @@ def analyze_tone(text: str, lang: str = "auto") -> dict:
             - confidence (float): Уверенность.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     report = _get_tone().analyze_tone(text, lang=lang)
     return {
@@ -2899,7 +2913,7 @@ def adjust_tone(
         Текст с скорректированной тональностью.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
     return str(_get_tone().adjust_tone(
         text, target=target, lang=lang, intensity=intensity
     ))
@@ -2923,7 +2937,7 @@ def detect_watermarks(text: str, lang: str = "auto") -> dict:
             - details (list): Подробности.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     report = _get_watermark().detect_watermarks(text, lang=lang)
     return {
@@ -2947,7 +2961,7 @@ def clean_watermarks(text: str, lang: str = "auto") -> str:
         Текст без водяных знаков.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
     return str(_get_watermark().clean_watermarks(text, lang=lang))
 
 
@@ -2973,7 +2987,7 @@ def watermark_report(
         raise InputTooLargeError(len(text), max_length)
 
     if lang == "auto":
-        lang = detect_language(text) if text.strip() else "en"
+        lang = _detect_language(text) if text.strip() else "en"
 
     wm_mod = _get_watermark()
     unicode_report = wm_mod.detect_watermarks(text, lang=lang)
@@ -3179,7 +3193,7 @@ def spin(
         Уникальная версия текста.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
     return str(_get_spinner().spin_text(
         text, lang=lang, intensity=intensity, seed=seed
     ))
@@ -3203,7 +3217,7 @@ def spin_variants(
         Список уникальных версий.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
     return list(_get_spinner().generate_variants(
         text, count=count, lang=lang, intensity=intensity
     ))
@@ -3225,7 +3239,7 @@ def analyze_coherence(text: str, lang: str = "auto") -> dict:
             - issues (list): Обнаруженные проблемы
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     coh = _get_coherence()
     analyzer = coh.CoherenceAnalyzer(lang=lang)
@@ -3256,9 +3270,9 @@ def full_readability(text: str, lang: str = "auto") -> dict:
         Словарь со всеми метриками читабельности.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
-    analyzer = TextAnalyzer(lang=lang)
+    analyzer = _new_text_analyzer(lang=lang)
     return analyzer.full_readability(text)
 
 
@@ -3435,7 +3449,7 @@ def adversarial_calibrate(
         Dict with: final_text, rounds, score_history, final_score.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     current_text = text
     score_history: list[dict] = []
@@ -3506,7 +3520,7 @@ def humanize_sentences(
         human_kept, ai_processed, avg_ai_before, avg_ai_after.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     # Score each sentence
     sentences_data = detect_ai_sentences(text, lang=lang)
@@ -3608,7 +3622,7 @@ def humanize_variants(
     variants = max(1, min(variants, 10))
 
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     base_seed = seed if seed is not None else _rnd.randint(0, 2**31)
     results: list[dict[str, Any]] = []
@@ -3675,7 +3689,7 @@ def humanize_stream(
         original_chunk.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     limit_bytes = _memory_limit_bytes(memory_limit_mb)
     total_chars = len(text)
@@ -3754,7 +3768,7 @@ def anonymize_style(
 
     detected_lang = lang
     if lang == "auto":
-        detected_lang = detect_language(text)
+        detected_lang = _detect_language(text)
 
     anonymizer = StylometricAnonymizer(lang=detected_lang, seed=seed)
     result = anonymizer.anonymize(text, target=target)
@@ -3817,7 +3831,7 @@ def ash_humanize(
         elapsed_ms, steps_applied, methods_used.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     mod = _lazy_import("texthumanize.ash_engine")
     return mod.ASHEngine(
@@ -3850,7 +3864,7 @@ def ash_analyze(
         dict со всеми диагностиками ASH™.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     mod = _lazy_import("texthumanize.ash_engine")
     return mod.ASHEngine(lang=lang, corpus_profile=corpus_profile).analyze(text)
@@ -3877,7 +3891,7 @@ def sculpt_perplexity(
         SculptResult.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     mod = _lazy_import("texthumanize.perplexity_sculptor")
     return mod.PerplexitySculptor(lang=lang, seed=seed).sculpt(text, intensity)
@@ -3906,7 +3920,7 @@ def transfer_signature(
         TransferResult.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     mod = _lazy_import("texthumanize.signature_transfer")
     return mod.SignatureTransfer(
@@ -3930,7 +3944,7 @@ def detect_statistical_watermark(text: str, lang: str = "auto") -> Any:
         ForensicResult с verdict, z_score, green_ratio.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     mod = _lazy_import("texthumanize.watermark_forensics")
     return mod.WatermarkForensics(lang=lang).detect(text)
@@ -3957,7 +3971,7 @@ def neutralise_watermark(
         ForensicResult.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     mod = _lazy_import("texthumanize.watermark_forensics")
     return mod.WatermarkForensics(lang=lang, seed=seed).neutralise(text, intensity)
@@ -3984,7 +3998,7 @@ def model_cognition(
         CognitiveResult.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     mod = _lazy_import("texthumanize.cognitive_model")
     return mod.CognitiveModeler(lang=lang, seed=seed).model(text, intensity)
@@ -4016,7 +4030,7 @@ def adversarial_humanize(
         PlayResult.
     """
     if lang == "auto":
-        lang = detect_language(text)
+        lang = _detect_language(text)
 
     mod = _lazy_import("texthumanize.adversarial_play")
     return mod.AdversarialPlay(lang=lang, seed=seed).play(
