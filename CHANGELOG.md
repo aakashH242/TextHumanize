@@ -6,6 +6,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Licensed eval corpus** — added packaged `text-humanize.eval_corpus.v1` with CC0-licensed synthetic EN/RU/UK samples across `human`, `raw_ai`, `lightly_edited_ai`, and `heavily_edited_ai`, plus `load_eval_corpus()` for release and contributor benchmarks.
 - **Stronger semantic preservation** — dates, prices, versions, order ids, SKU-like identifiers, exact quotes, and multi-token named entities are now protected by default during humanization.
 - **Detector benchmark corpus** — added offline `detector_benchmark()` and `texthumanize detector-benchmark` for human vs AI vs edited-AI evaluation by language.
 - **CLI quality threshold** — added `--fail-under-quality` for CI workflows that should fail when `quality_score` or benchmark average quality is below a configured threshold.
@@ -26,6 +27,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - **Cold-start lazy imports** — package import no longer performs distribution metadata lookup, and accessing core public functions no longer loads language packs, analyzers, detectors, or the full pipeline until execution needs them.
+- **Detector benchmark labels** — `detector_benchmark()` now reports `raw_ai`, `lightly_edited_ai`, and `heavily_edited_ai` separately while preserving `ai` and `edited_ai` as input aliases.
 - **Safer default preservation** — numeric values are protected by default and semantic placeholders are inline-safe, allowing text around protected values to still be improved.
 - **ReDoS hardening** — segmenter HTML protection now skips impossible paired-tag scans and precomputes placeholder spans per regex pass, with adversarial regex regression tests.
 - **Runtime caching** — language pack lookup and standard debureaucratizer regex patterns are now cached, and sentence-validator hot regexes are compiled once at import time.

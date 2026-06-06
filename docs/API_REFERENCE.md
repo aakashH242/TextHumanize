@@ -103,13 +103,17 @@ result = humanize(
 
 ### `detector_benchmark(languages=None) → dict`
 
-Offline benchmark for detector distribution quality across human, AI, and
-edited-AI samples. Returns overall metrics plus per-language score averages,
-false-positive rate, AI recall, and edited-AI flag rate.
+Offline benchmark for detector distribution quality across human, raw-AI,
+lightly edited AI, and heavily edited AI samples. Returns overall metrics plus
+per-language score averages, false-positive rate, raw-AI recall, and edited-AI
+flag rates. The packaged corpus is synthetic, CC0-licensed, and can be
+inspected with `load_eval_corpus(include_metadata=True)`.
 
 ```python
-from texthumanize import detector_benchmark
+from texthumanize import detector_benchmark, load_eval_corpus
 
+corpus = load_eval_corpus(include_metadata=True)
+print(corpus["license"]["id"])
 report = detector_benchmark(languages=["en", "ru", "uk"])
 print(report["overall"])
 print(report["per_language"]["en"]["avg_score_by_label"])

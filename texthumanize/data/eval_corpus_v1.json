@@ -1,0 +1,166 @@
+{
+  "schema_version": "text-humanize.eval_corpus.v1",
+  "name": "TextHumanize Licensed Eval Corpus v1",
+  "description": "Small offline detector benchmark corpus for CI, release snapshots, and contributor regression work. All samples are synthetic examples authored for TextHumanize; no third-party text is included.",
+  "license": {
+    "id": "CC0-1.0",
+    "name": "Creative Commons Zero v1.0 Universal",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "scope": "All sample texts and metadata in this JSON file.",
+    "provenance_note": "Authored synthetic samples created for TextHumanize evaluation. They are not copied from customer content, public articles, model provider outputs, or proprietary corpora."
+  },
+  "labels": [
+    {
+      "id": "human",
+      "meaning": "Human-style sample authored as original human copy."
+    },
+    {
+      "id": "raw_ai",
+      "legacy_aliases": ["ai"],
+      "meaning": "Unedited assistant-style draft with formulaic structure."
+    },
+    {
+      "id": "lightly_edited_ai",
+      "legacy_aliases": ["edited_ai"],
+      "meaning": "Assistant-style draft with light editing; AI-like structure remains visible."
+    },
+    {
+      "id": "heavily_edited_ai",
+      "meaning": "AI-origin-style draft after substantial human editing; expected to be harder to flag."
+    }
+  ],
+  "samples": [
+    {
+      "id": "en_human_support_001",
+      "lang": "en",
+      "label": "human",
+      "domain": "support",
+      "length_bucket": "lt_300",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0",
+      "text": "I checked the billing export again. The duplicate invoice was voided before lunch, but the balance cache updates overnight. If it still looks wrong tomorrow, send me the order number and I will trace the payment row directly."
+    },
+    {
+      "id": "en_raw_ai_product_001",
+      "lang": "en",
+      "label": "raw_ai",
+      "domain": "product",
+      "length_bucket": "300_1000",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0",
+      "text": "Furthermore, this platform provides a comprehensive solution for optimizing operational workflows across multiple business functions. The implementation of advanced automation capabilities facilitates improved efficiency, while the integration of scalable infrastructure ensures consistent performance and measurable outcomes for all stakeholders."
+    },
+    {
+      "id": "en_lightly_edited_ai_landing_001",
+      "lang": "en",
+      "label": "lightly_edited_ai",
+      "domain": "landing",
+      "length_bucket": "300_1000",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_light_edit",
+      "license": "CC0-1.0",
+      "text": "The editor shortened the opening, but the page still follows a highly structured pattern: identify the challenge, introduce a comprehensive workflow, and conclude with optimized results. It reads clearer than the draft, although the consistent transitions and broad claims still feel assistant-like."
+    },
+    {
+      "id": "en_heavily_edited_ai_docs_001",
+      "lang": "en",
+      "label": "heavily_edited_ai",
+      "domain": "docs",
+      "length_bucket": "lt_300",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_heavy_edit",
+      "license": "CC0-1.0",
+      "text": "The deployment note is now mostly practical: restart the worker, check the queue depth, then compare the last processed id with the admin panel. The old draft was broader, but this version keeps only the steps an operator needs."
+    },
+    {
+      "id": "ru_human_support_001",
+      "lang": "ru",
+      "label": "human",
+      "domain": "support",
+      "length_bucket": "lt_300",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0",
+      "text": "Я посмотрел утреннюю выгрузку: часть заявок задублировалась не из-за менеджеров. Интеграция дважды отправила один пакет после таймаута. Пока поставил ручную проверку, вечером уберу лишние строки и сверю суммы."
+    },
+    {
+      "id": "ru_raw_ai_docs_001",
+      "lang": "ru",
+      "label": "raw_ai",
+      "domain": "docs",
+      "length_bucket": "300_1000",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0",
+      "text": "Кроме того, необходимо отметить, что внедрение комплексного подхода способствует повышению эффективности процессов. Использование современных методологий обеспечивает достижение оптимальных результатов и позволяет заинтересованным сторонам получить значимые преимущества в рамках системы."
+    },
+    {
+      "id": "ru_lightly_edited_ai_landing_001",
+      "lang": "ru",
+      "label": "lightly_edited_ai",
+      "domain": "landing",
+      "length_bucket": "300_1000",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_light_edit",
+      "license": "CC0-1.0",
+      "text": "Редактор немного сократил первый абзац, но структура осталась очень ровной: сначала проблема, затем комплексный подход, потом обещание оптимальных результатов. Текст стал понятнее, однако повторяющиеся связки и общие формулировки все еще выглядят как доработанный черновик ассистента."
+    },
+    {
+      "id": "ru_heavily_edited_ai_product_001",
+      "lang": "ru",
+      "label": "heavily_edited_ai",
+      "domain": "product",
+      "length_bucket": "lt_300",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_heavy_edit",
+      "license": "CC0-1.0",
+      "text": "В карточке оставили только проверяемые детали: тариф, лимит запросов и ссылку на журнал ошибок. Старый черновик был длиннее и обещал слишком много, поэтому финальная версия звучит ближе к обычной продуктовой правке."
+    },
+    {
+      "id": "uk_human_support_001",
+      "lang": "uk",
+      "label": "human",
+      "domain": "support",
+      "length_bucket": "lt_300",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0",
+      "text": "Я перевірив останні замовлення і бачу, що проблема була тільки на одному складі. Дані підтягнулися із затримкою, тому частина статусів виглядала старою. Зараз усе оновлено, але моніторинг ще залишу на ніч."
+    },
+    {
+      "id": "uk_raw_ai_article_001",
+      "lang": "uk",
+      "label": "raw_ai",
+      "domain": "article",
+      "length_bucket": "300_1000",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0",
+      "text": "Варто зазначити, що впровадження інноваційних підходів забезпечує суттєве підвищення ефективності організаційних процесів. Крім того, використання комплексних методологій сприяє досягненню оптимальних результатів у різних сферах діяльності."
+    },
+    {
+      "id": "uk_lightly_edited_ai_product_001",
+      "lang": "uk",
+      "label": "lightly_edited_ai",
+      "domain": "product",
+      "length_bucket": "300_1000",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_light_edit",
+      "license": "CC0-1.0",
+      "text": "Редактор прибрав кілька зайвих фраз, але текст усе ще рухається за шаблоном: ризик, комплексний аналіз, точкова правка і фінальна перевірка. Він став коротшим, проте рівний ритм і загальні обіцянки видають походження чернетки."
+    },
+    {
+      "id": "uk_heavily_edited_ai_docs_001",
+      "lang": "uk",
+      "label": "heavily_edited_ai",
+      "domain": "docs",
+      "length_bucket": "lt_300",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_heavy_edit",
+      "license": "CC0-1.0",
+      "text": "У фінальній інструкції залишили три дії: перевірити webhook, повторити імпорт і звірити кількість рядків. Початкова чернетка була ширша, але після редагування тут майже немає загальних порад."
+    }
+  ]
+}

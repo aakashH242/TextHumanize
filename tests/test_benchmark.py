@@ -6,7 +6,7 @@ import time
 import unittest
 
 from texthumanize import detect_ai, humanize
-from texthumanize.benchmarks import detector_benchmark
+from texthumanize.benchmarks import detector_benchmark, load_eval_corpus
 
 
 class TestPerformance(unittest.TestCase):
@@ -234,17 +234,50 @@ class TestDetectorBenchmark(unittest.TestCase):
         ]
         report = detector_benchmark(corpus, languages=["en"], include_details=True)
         self.assertEqual(report["schema_version"], "1.0")
-        self.assertEqual(report["labels"], ["human", "ai", "edited_ai"])
+        self.assertEqual(
+            report["labels"],
+            ["human", "raw_ai", "lightly_edited_ai", "heavily_edited_ai"],
+        )
+        self.assertEqual(report["label_aliases"]["ai"], "raw_ai")
+        self.assertEqual(report["label_aliases"]["edited_ai"], "lightly_edited_ai")
         self.assertEqual(report["overall"]["total"], 3)
         self.assertIn("en", report["per_language"])
+        self.assertEqual(report["details"][1]["label"], "raw_ai")
+        self.assertEqual(report["details"][2]["label"], "lightly_edited_ai")
         self.assertEqual(len(report["details"]), 3)
 
     def test_detector_benchmark_builtin_language(self):
         """Built-in corpus can be scoped by language."""
         report = detector_benchmark(languages=["en"], include_details=False)
         self.assertEqual(report["languages"], ["en"])
-        self.assertEqual(report["overall"]["total"], 3)
+        self.assertEqual(report["overall"]["total"], 4)
+        self.assertEqual(report["corpus"]["source"], "builtin")
+        self.assertEqual(report["corpus"]["license"]["id"], "CC0-1.0")
+        self.assertIn("raw_ai_recall", report["per_language"]["en"])
+        self.assertIn("lightly_edited_ai_flag_rate", report["per_language"]["en"])
+        self.assertIn("heavily_edited_ai_flag_rate", report["per_language"]["en"])
         self.assertEqual(report["per_language"]["en"]["details"], [])
+
+    def test_load_eval_corpus_metadata_and_required_labels(self):
+        """Packaged eval corpus should be licensed and balanced by label."""
+        corpus = load_eval_corpus(include_metadata=True)
+        self.assertEqual(corpus["schema_version"], "text-humanize.eval_corpus.v1")
+        self.assertEqual(corpus["license"]["id"], "CC0-1.0")
+        self.assertEqual(corpus["sample_count"], 12)
+        samples = corpus["samples"]
+        labels = {sample["label"] for sample in samples}
+        self.assertEqual(
+            labels,
+            {"human", "raw_ai", "lightly_edited_ai", "heavily_edited_ai"},
+        )
+        self.assertEqual({sample["lang"] for sample in samples}, {"en", "ru", "uk"})
+        for sample in samples:
+            self.assertTrue(sample["id"])
+            self.assertTrue(sample["domain"])
+            self.assertTrue(sample["length_bucket"])
+            self.assertEqual(sample["source"], "text-humanize-authored-synthetic")
+            self.assertEqual(sample["license"], "CC0-1.0")
+            self.assertGreater(len(sample["text"]), 40)
 
 
 if __name__ == "__main__":

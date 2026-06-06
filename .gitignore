@@ -66,3 +66,5 @@ scripts/_dumps/
 
 # Training data (large, generated)
 data/
+!texthumanize/data/
+!texthumanize/data/*.json

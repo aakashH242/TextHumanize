@@ -680,8 +680,12 @@ for segment in report['segments']:
 # Batch detection
 results = detect_ai_batch(["Text 1", "Text 2", "Text 3"], lang="en")
 
-# Offline detector benchmark: human vs AI vs edited-AI by language
-from texthumanize import detector_benchmark
+# Offline detector benchmark: human vs raw/lightly/heavily edited AI
+from texthumanize import detector_benchmark, load_eval_corpus
+
+corpus = load_eval_corpus(include_metadata=True)
+print(corpus["license"]["id"])  # CC0-1.0
+
 report = detector_benchmark(languages=["en", "ru", "uk"])
 print(report["per_language"]["en"]["avg_score_by_label"])
 ```

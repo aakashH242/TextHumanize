@@ -812,13 +812,15 @@ def _handle_detector_benchmark_command(
         print(
             f"  {lang}: accuracy={lang_report['accuracy']:.1%}, "
             f"human_avg={avgs['human']:.2f}, "
-            f"edited_avg={avgs['edited_ai']:.2f}, "
-            f"ai_avg={avgs['ai']:.2f}"
+            f"raw_ai_avg={avgs['raw_ai']:.2f}, "
+            f"light_edit_avg={avgs['lightly_edited_ai']:.2f}, "
+            f"heavy_edit_avg={avgs['heavily_edited_ai']:.2f}"
         )
         print(
             f"      false_positive={lang_report['human_false_positive_rate']:.1%}, "
-            f"ai_recall={lang_report['ai_recall']:.1%}, "
-            f"edited_flag={lang_report['edited_ai_flag_rate']:.1%}"
+            f"raw_ai_recall={lang_report['raw_ai_recall']:.1%}, "
+            f"light_edit_flag={lang_report['lightly_edited_ai_flag_rate']:.1%}, "
+            f"heavy_edit_flag={lang_report['heavily_edited_ai_flag_rate']:.1%}"
         )
     print("=" * 72)
 

@@ -29,7 +29,8 @@ Use explicit labels instead of vague buckets:
 |-------|---------|
 | `human` | Human-written text from licensed or owned sources |
 | `raw_ai` | Unedited LLM draft |
-| `edited_ai` | AI draft with light manual or tool-assisted editing |
+| `lightly_edited_ai` | AI draft with light manual or tool-assisted editing |
+| `heavily_edited_ai` | AI-origin draft after substantial editing, expected to be harder to flag |
 | `humanized` | Output produced by TextHumanize |
 | `editor_final` | Human-reviewed final version |
 
@@ -37,14 +38,21 @@ Track language, domain, and length separately. Recommended domains: SEO,
 blog, product, landing page, support, academic, legal, documentation, finance,
 and social copy.
 
+The packaged `text-humanize.eval_corpus.v1` corpus is stored in
+`texthumanize/data/eval_corpus_v1.json`. It contains small CC0-licensed
+synthetic EN/RU/UK samples authored for TextHumanize evaluation, with no
+third-party or customer text. Use `load_eval_corpus(include_metadata=True)` to
+inspect license, provenance, languages, labels, and sample metadata.
+
 ## Detector Benchmarks
 
 TextHumanize detector benchmarks measure the built-in detector only:
 
 - `avg_score_by_label`: average built-in score per corpus label.
 - false-positive rate: share of `human` samples flagged as AI-like.
-- AI recall: share of `raw_ai` samples flagged as AI-like.
-- edited-AI flag rate: share of `edited_ai` samples still flagged.
+- raw-AI recall: share of `raw_ai` samples flagged as AI-like.
+- lightly edited AI flag rate: share of `lightly_edited_ai` samples still flagged.
+- heavily edited AI flag rate: share of `heavily_edited_ai` samples still flagged.
 - score reduction: before/after delta in percentage points.
 
 These numbers are internal quality signals. They do not guarantee passing

@@ -160,8 +160,21 @@ class TestCLIDetectAI:
         data = json.loads(out)
         assert data["schema_version"] == "1.0"
         assert data["languages"] == ["en"]
-        assert data["labels"] == ["human", "ai", "edited_ai"]
-        assert data["overall"]["total"] == 3
+        assert data["labels"] == [
+            "human",
+            "raw_ai",
+            "lightly_edited_ai",
+            "heavily_edited_ai",
+        ]
+        assert data["corpus"]["license"]["id"] == "CC0-1.0"
+        assert data["overall"]["total"] == 4
+
+    def test_detector_benchmark_text_output_uses_new_labels(self, capsys):
+        run_cli('detector-benchmark', '--langs', 'en')
+        out = capsys.readouterr().out
+        assert "raw_ai_avg" in out
+        assert "light_edit_flag" in out
+        assert "heavy_edit_flag" in out
 
 
 class TestCLIParaphrase:

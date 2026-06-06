@@ -16,11 +16,28 @@ from __future__ import annotations
 import json
 import logging
 import time
+from importlib import resources
 from typing import Any
 
 from texthumanize.core import detect_ai, humanize
 
 logger = logging.getLogger(__name__)
+
+_EVAL_CORPUS_FILE = "eval_corpus_v1.json"
+_DETECTOR_BENCHMARK_LABELS = [
+    "human",
+    "raw_ai",
+    "lightly_edited_ai",
+    "heavily_edited_ai",
+]
+_LABEL_ALIASES = {
+    "ai": "raw_ai",
+    "edited_ai": "lightly_edited_ai",
+    "human": "human",
+    "raw_ai": "raw_ai",
+    "lightly_edited_ai": "lightly_edited_ai",
+    "heavily_edited_ai": "heavily_edited_ai",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -77,142 +94,103 @@ _EVAL_TEXTS_RU = [
     ),
 ]
 
-_DETECTOR_BENCHMARK_CORPUS: list[dict[str, str]] = [
-    {
-        "id": "en_human_support",
-        "lang": "en",
-        "label": "human",
-        "domain": "support",
-        "text": (
-            "I checked the account this morning and the duplicate invoice is already "
-            "voided. You should see the corrected balance after the next sync. If it "
-            "still looks wrong tomorrow, send me the order number and I'll trace it "
-            "through billing instead of guessing from the dashboard."
-        ),
-    },
-    {
-        "id": "en_ai_product",
-        "lang": "en",
-        "label": "ai",
-        "domain": "product",
-        "text": (
-            "Furthermore, this platform provides a comprehensive solution for optimizing "
-            "operational workflows across multiple business functions. The implementation "
-            "of advanced automation capabilities facilitates improved efficiency, while "
-            "the integration of scalable infrastructure ensures consistent performance "
-            "and measurable outcomes for stakeholders."
-        ),
-    },
-    {
-        "id": "en_edited_ai_marketing",
-        "lang": "en",
-        "label": "edited_ai",
-        "domain": "marketing",
-        "text": (
-            "Furthermore, the platform aims to simplify content operations while "
-            "maintaining a practical workflow for teams. The editor tightened the draft, "
-            "but it still demonstrates comprehensive structure, consistent transitions, "
-            "and optimized messaging across several campaign stages. In conclusion, the "
-            "result is clearer, although the underlying assistant-like pattern remains "
-            "visible."
-        ),
-    },
-    {
-        "id": "ru_human_note",
-        "lang": "ru",
-        "label": "human",
-        "domain": "note",
-        "text": (
-            "Я посмотрел выгрузку за утро: часть заявок действительно задублировалась, "
-            "но это не ошибка менеджеров. Интеграция два раза отправила один и тот же "
-            "пакет после таймаута. Пока поставил ручную проверку, вечером уберу лишние "
-            "строки и сверю суммы."
-        ),
-    },
-    {
-        "id": "ru_ai_docs",
-        "lang": "ru",
-        "label": "ai",
-        "domain": "docs",
-        "text": (
-            "Кроме того, необходимо отметить, что внедрение комплексного подхода "
-            "способствует повышению эффективности процессов. Использование современных "
-            "методологий обеспечивает достижение оптимальных результатов и позволяет "
-            "заинтересованным сторонам получить значимые преимущества в рамках системы."
-        ),
-    },
-    {
-        "id": "ru_edited_ai_landing",
-        "lang": "ru",
-        "label": "edited_ai",
-        "domain": "landing",
-        "text": (
-            "Кроме того, сервис помогает команде быстрее готовить тексты для сайта "
-            "и рекламы. Редактор упростил формулировки, однако структура остается "
-            "достаточно ровной: проверка повторов, анализ риска водяных знаков и "
-            "последовательная финальная правка. Таким образом, текст звучит понятнее, "
-            "но сохраняет заметный шаблонный ритм и комплексный подход к улучшению "
-            "качества."
-        ),
-    },
-    {
-        "id": "uk_human_update",
-        "lang": "uk",
-        "label": "human",
-        "domain": "support",
-        "text": (
-            "Я перевірив останні замовлення і бачу, що проблема була тільки в одному "
-            "складі. Дані підтягнулися із затримкою, тому частина статусів виглядала "
-            "старою. Зараз усе оновлено, але я ще залишу моніторинг на ніч."
-        ),
-    },
-    {
-        "id": "uk_ai_article",
-        "lang": "uk",
-        "label": "ai",
-        "domain": "article",
-        "text": (
-            "Варто зазначити, що впровадження інноваційних підходів забезпечує суттєве "
-            "підвищення ефективності організаційних процесів. Крім того, використання "
-            "комплексних методологій сприяє досягненню оптимальних результатів у "
-            "різних сферах діяльності. Таким чином, системний підхід дозволяє "
-            "забезпечити стабільне покращення показників, оптимізувати ресурси та "
-            "сформувати довгострокові переваги для всіх зацікавлених сторін."
-        ),
-    },
-    {
-        "id": "uk_edited_ai_product",
-        "lang": "uk",
-        "label": "edited_ai",
-        "domain": "product",
-        "text": (
-            "Крім того, інструмент перевіряє чернетки перед публікацією і показує, "
-            "де текст звучить надто рівно. Редактор може залишити факти, ціни й назви "
-            "продуктів без змін, однак структура все ще доволі послідовна: аналіз "
-            "ризику, точкова правка і фінальна перевірка. У результаті текст стає "
-            "простішим, але помітний шаблонний ритм зберігається."
-        ),
-    },
-]
+def _read_eval_corpus_resource() -> dict[str, Any]:
+    """Read the packaged licensed evaluation corpus."""
+    corpus_path = resources.files("texthumanize").joinpath("data").joinpath(
+        _EVAL_CORPUS_FILE
+    )
+    with corpus_path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict) or not isinstance(data.get("samples"), list):
+        raise ValueError(f"Invalid eval corpus resource: {_EVAL_CORPUS_FILE}")
+    return data
 
 
-def _score_to_label(score: float, threshold: float, edited_threshold: float) -> str:
+def _canonical_label(label: str) -> str:
+    """Normalize legacy benchmark labels to the licensed corpus taxonomy."""
+    canonical = _LABEL_ALIASES.get(label)
+    if canonical is None:
+        valid = ", ".join(_DETECTOR_BENCHMARK_LABELS)
+        raise ValueError(f"Unsupported benchmark label {label!r}; expected one of {valid}")
+    return canonical
+
+
+def _normalize_benchmark_sample(sample: dict[str, Any]) -> dict[str, Any]:
+    """Return a shallow normalized sample copy."""
+    required = ("id", "lang", "label", "domain", "text")
+    missing = [key for key in required if not sample.get(key)]
+    if missing:
+        raise ValueError(
+            f"Benchmark sample {sample.get('id', '<unknown>')!r} missing: "
+            f"{', '.join(missing)}"
+        )
+    normalized = dict(sample)
+    normalized["label"] = _canonical_label(str(normalized["label"]))
+    normalized.setdefault("length_bucket", "unknown")
+    normalized.setdefault("source", "custom")
+    normalized.setdefault("origin", "custom")
+    normalized.setdefault("license", "custom")
+    return normalized
+
+
+def load_eval_corpus(
+    *,
+    languages: list[str] | None = None,
+    labels: list[str] | None = None,
+    include_metadata: bool = False,
+) -> list[dict[str, Any]] | dict[str, Any]:
+    """Load the packaged licensed eval corpus.
+
+    The built-in corpus is intentionally small, fully offline, and explicitly
+    licensed for redistribution. Labels are normalized to:
+    ``human``, ``raw_ai``, ``lightly_edited_ai``, ``heavily_edited_ai``.
+    """
+    data = _read_eval_corpus_resource()
+    wanted_languages = set(languages or [])
+    wanted_labels = {_canonical_label(label) for label in labels} if labels else set()
+    samples = [
+        _normalize_benchmark_sample(sample)
+        for sample in data["samples"]
+        if (not wanted_languages or sample.get("lang") in wanted_languages)
+        and (
+            not wanted_labels
+            or _canonical_label(str(sample.get("label", ""))) in wanted_labels
+        )
+    ]
+    if not include_metadata:
+        return samples
+    enriched = dict(data)
+    enriched["samples"] = samples
+    enriched["sample_count"] = len(samples)
+    enriched["languages"] = sorted({sample["lang"] for sample in samples})
+    return enriched
+
+
+def _score_to_label(
+    score: float,
+    threshold: float,
+    edited_threshold: float,
+    heavily_edited_threshold: float,
+) -> str:
     if score >= threshold:
-        return "ai"
+        return "raw_ai"
     if score >= edited_threshold:
-        return "edited_ai"
+        return "lightly_edited_ai"
+    if score >= heavily_edited_threshold:
+        return "heavily_edited_ai"
     return "human"
 
 
 def detector_benchmark(
-    corpus: list[dict[str, str]] | None = None,
+    corpus: list[dict[str, Any]] | None = None,
     *,
     languages: list[str] | None = None,
     threshold: float = 0.50,
     edited_threshold: float = 0.35,
+    heavily_edited_threshold: float = 0.25,
     include_details: bool = True,
 ) -> dict[str, Any]:
-    """Benchmark the detector on human, AI and edited-AI samples by language.
+    """Benchmark the detector on human, raw-AI and edited-AI samples by language.
 
     The benchmark is fully offline and intentionally small enough for CI and
     release checks. It reports distribution metrics rather than claiming
@@ -220,7 +198,13 @@ def detector_benchmark(
     """
     from texthumanize import __version__
 
-    samples = corpus or _DETECTOR_BENCHMARK_CORPUS
+    corpus_metadata: dict[str, Any] | None = None
+    if corpus is None:
+        loaded = load_eval_corpus(include_metadata=True)
+        corpus_metadata = loaded if isinstance(loaded, dict) else None
+        samples = list(corpus_metadata["samples"]) if corpus_metadata else []
+    else:
+        samples = [_normalize_benchmark_sample(sample) for sample in corpus]
     selected_languages = (
         list(languages)
         if languages
@@ -235,44 +219,56 @@ def detector_benchmark(
         lang_samples = [sample for sample in samples if sample.get("lang") == lang]
         details: list[dict[str, Any]] = []
         label_scores: dict[str, list[float]] = {
-            "human": [],
-            "ai": [],
-            "edited_ai": [],
+            label: []
+            for label in _DETECTOR_BENCHMARK_LABELS
         }
         correct = 0
 
         for sample in lang_samples:
             detection = detect_ai(sample["text"], lang=lang)
             score = float(detection.get("combined_score", detection.get("score", 0.0)))
-            label = sample["label"]
-            predicted = _score_to_label(score, threshold, edited_threshold)
+            label = _canonical_label(str(sample["label"]))
+            predicted = _score_to_label(
+                score,
+                threshold,
+                edited_threshold,
+                heavily_edited_threshold,
+            )
             label_scores.setdefault(label, []).append(score)
 
             if label == "human":
                 sample_correct = score < threshold
-            elif label == "ai":
+            elif label == "raw_ai":
                 sample_correct = score >= threshold
-            else:
+            elif label == "lightly_edited_ai":
                 sample_correct = score >= edited_threshold
+            else:
+                sample_correct = score < threshold
             correct += int(sample_correct)
 
             row = {
                 "id": sample["id"],
                 "lang": lang,
                 "domain": sample.get("domain", "general"),
+                "length_bucket": sample.get("length_bucket", "unknown"),
                 "label": label,
                 "predicted": predicted,
                 "score": round(score, 4),
                 "verdict": detection.get("verdict", predicted),
                 "correct": sample_correct,
+                "source": sample.get("source", "custom"),
+                "origin": sample.get("origin", "custom"),
+                "license": sample.get("license", "custom"),
             }
             details.append(row)
             all_details.append(row)
 
         total = len(lang_samples)
         human_scores = label_scores.get("human", [])
-        ai_scores = label_scores.get("ai", [])
-        edited_scores = label_scores.get("edited_ai", [])
+        raw_ai_scores = label_scores.get("raw_ai", [])
+        lightly_edited_scores = label_scores.get("lightly_edited_ai", [])
+        heavily_edited_scores = label_scores.get("heavily_edited_ai", [])
+        all_edited_scores = lightly_edited_scores + heavily_edited_scores
 
         def avg(values: list[float]) -> float:
             return round(sum(values) / len(values), 4) if values else 0.0
@@ -282,22 +278,37 @@ def detector_benchmark(
             "accuracy": round(correct / total, 4) if total else 0.0,
             "avg_score_by_label": {
                 "human": avg(human_scores),
-                "ai": avg(ai_scores),
-                "edited_ai": avg(edited_scores),
+                "raw_ai": avg(raw_ai_scores),
+                "lightly_edited_ai": avg(lightly_edited_scores),
+                "heavily_edited_ai": avg(heavily_edited_scores),
             },
             "human_false_positive_rate": round(
                 sum(score >= threshold for score in human_scores) / len(human_scores),
                 4,
             ) if human_scores else 0.0,
+            "raw_ai_recall": round(
+                sum(score >= threshold for score in raw_ai_scores) / len(raw_ai_scores),
+                4,
+            ) if raw_ai_scores else 0.0,
             "ai_recall": round(
-                sum(score >= threshold for score in ai_scores) / len(ai_scores),
+                sum(score >= threshold for score in raw_ai_scores) / len(raw_ai_scores),
                 4,
-            ) if ai_scores else 0.0,
+            ) if raw_ai_scores else 0.0,
+            "lightly_edited_ai_flag_rate": round(
+                sum(score >= edited_threshold for score in lightly_edited_scores)
+                / len(lightly_edited_scores),
+                4,
+            ) if lightly_edited_scores else 0.0,
+            "heavily_edited_ai_flag_rate": round(
+                sum(score >= heavily_edited_threshold for score in heavily_edited_scores)
+                / len(heavily_edited_scores),
+                4,
+            ) if heavily_edited_scores else 0.0,
             "edited_ai_flag_rate": round(
-                sum(score >= edited_threshold for score in edited_scores)
-                / len(edited_scores),
+                sum(score >= edited_threshold for score in all_edited_scores)
+                / len(all_edited_scores),
                 4,
-            ) if edited_scores else 0.0,
+            ) if all_edited_scores else 0.0,
             "details": details if include_details else [],
         }
 
@@ -308,8 +319,21 @@ def detector_benchmark(
         "version": __version__,
         "threshold": threshold,
         "edited_threshold": edited_threshold,
+        "heavily_edited_threshold": heavily_edited_threshold,
         "languages": selected_languages,
-        "labels": ["human", "ai", "edited_ai"],
+        "labels": list(_DETECTOR_BENCHMARK_LABELS),
+        "label_aliases": {
+            "ai": "raw_ai",
+            "edited_ai": "lightly_edited_ai",
+        },
+        "corpus": {
+            "source": "builtin" if corpus is None else "custom",
+            "schema_version": corpus_metadata.get("schema_version")
+            if corpus_metadata else None,
+            "name": corpus_metadata.get("name") if corpus_metadata else None,
+            "license": corpus_metadata.get("license") if corpus_metadata else None,
+            "sample_count": len(samples),
+        },
         "overall": {
             "total": total_samples,
             "accuracy": round(total_correct / total_samples, 4)

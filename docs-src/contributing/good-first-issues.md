@@ -92,7 +92,8 @@ meaning.
 
 **Acceptance criteria:**
 
-- Add at least 12 examples across `human`, `raw_ai`, and `edited_ai` labels.
+- Add at least 12 examples across `human`, `raw_ai`,
+  `lightly_edited_ai`, and `heavily_edited_ai` labels.
 - Include metadata: `lang`, `domain`, `label`, `length_bucket`, `source`.
 - No private data, copied customer text, or unlicensed third-party text.
 - Benchmark tests should remain deterministic.
