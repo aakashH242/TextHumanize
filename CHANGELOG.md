@@ -5,7 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-06-08
+
 ### Added
+- **Unified TextHumanize Quality Score** — added `quality_score_report()` (and `texthumanize quality` / `--quality-score`) returning a single explainable score (0..1) with a letter grade across seven dimensions: semantic similarity, naturalness, readability, AI-pattern resistance, watermark cleanliness, edit balance, and processing speed. Supports an optional reference text, custom dimension weights, a `fast` mode, and emits strengths, weaknesses, and recommendations under the `text-humanize.quality_score.v1` schema.
 - **Licensed eval corpus** — added packaged `text-humanize.eval_corpus.v1` with CC0-licensed synthetic EN/RU/UK samples across `human`, `raw_ai`, `lightly_edited_ai`, and `heavily_edited_ai`, plus `load_eval_corpus()` for release and contributor benchmarks.
 - **Eval corpus indexing** — `load_eval_corpus()` can now filter fixtures by language, label, domain, length bucket, and source, while `index_eval_corpus()` exposes deterministic ids and counts for every fixture dimension.
 - **Contributor JSON packs** — added packaged CC0 examples and public loaders for AI markers, synonyms, collocations, and watermark samples via `list_contributor_packs()`, `load_contributor_pack()`, and `validate_contributor_pack()`.

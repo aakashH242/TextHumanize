@@ -70,6 +70,35 @@ report["highlighted_spans"]
 report["suggested_actions"]
 ```
 
+### `quality_score_report(text, original=None, lang)`
+
+Unified **TextHumanize Quality Score** — a single explainable score (0..1) with a
+letter grade across seven dimensions: semantic similarity, naturalness,
+readability, AI-pattern resistance, watermark cleanliness, edit balance, and
+processing speed. Pass `original` (the pre-humanization text) to enable the
+similarity and edit-balance dimensions; otherwise they are dropped and the
+remaining weights renormalised. Use `weights=` to re-weight dimensions and
+`fast=True` for a quicker, slightly coarser score.
+
+```python
+from texthumanize import humanize, quality_score_report
+
+result = humanize("Furthermore, it is important to note...", lang="en")
+score = quality_score_report(result.text, original=result.original, lang="en")
+score["score"]            # composite 0..1
+score["grade"]            # "A+".."F"
+score["verdict"]          # excellent | good | fair | poor
+score["dimensions"]       # per-dimension value, weight, and detail
+score["recommendations"]  # actionable next steps
+```
+
+CLI:
+
+```bash
+texthumanize quality output.txt --reference input.txt --json
+texthumanize input.txt --quality-score
+```
+
 ### `analyze(text, lang)`
 
 Get text analysis report.

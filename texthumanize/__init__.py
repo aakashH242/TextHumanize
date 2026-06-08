@@ -40,7 +40,7 @@ import sys as _sys
 import types as _types
 from typing import Any
 
-__version__ = "0.28.4"
+__version__ = "0.29.0"
 __author__ = "TextHumanize Contributors"
 __license__ = "Personal Use Only"
 
@@ -80,6 +80,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "detect_ai_mixed": ("texthumanize.core", "detect_ai_mixed"),
     "detect_ai_explain": ("texthumanize.core", "detect_ai_explain"),
     "audit_report": ("texthumanize.core", "audit_report"),
+    "quality_score_report": ("texthumanize.core", "quality_score_report"),
     "build_author_profile": ("texthumanize.core", "build_author_profile"),
     "compare_fingerprint": ("texthumanize.core", "compare_fingerprint"),
     "detect_ab": ("texthumanize.core", "detect_ab"),
@@ -532,6 +533,7 @@ __all__ = [
     "normalize_style_preset",
     "paraphrase",
     "perplexity_score",
+    "quality_score_report",
     "quick_benchmark",
     "replacement_is_natural",
     "resolve_style_target",

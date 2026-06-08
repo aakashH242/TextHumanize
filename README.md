@@ -76,7 +76,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 - [Responsible Use](#-responsible-use)
 - [For Business & Enterprise](#-for-business--enterprise)
 - [FAQ & Troubleshooting](#-faq--troubleshooting)
-- [What's New in v0.28.4](#-whats-new-in-v0284)
+- [What's New in v0.29.0](#-whats-new-in-v0290)
 - [Contributing](#-contributing)
 - [Limitations](#-limitations)
 - [Support the Project](#-support-the-project)
@@ -194,7 +194,7 @@ git clone https://github.com/ksanyok/TextHumanize.git
 cd TextHumanize && pip install -e .
 ```
 
-> **Tip:** Pin your version for production: `pip install texthumanize==0.28.4`
+> **Tip:** Pin your version for production: `pip install texthumanize==0.29.0`
 
 <details>
 <summary><b>PHP / TypeScript</b></summary>
@@ -214,7 +214,9 @@ cd js/ && npm install
 ## ⚡ Quick Start
 
 ```python
-from texthumanize import humanize, analyze, detect_ai, detect_ai_explain, explain
+from texthumanize import (
+    humanize, analyze, detect_ai, detect_ai_explain, quality_score_report, explain,
+)
 
 # 1. Humanize text
 result = humanize(
@@ -239,6 +241,11 @@ print(f"AI: {ai['score']:.0%} | {ai['verdict']} | Confidence: {ai['confidence']:
 # 3b. Explainable AI audit
 audit = detect_ai_explain("Furthermore, it is important to note...", lang="en")
 print(audit["highlighted_spans"])
+
+# 3c. Unified TextHumanize Quality Score (0..1 + letter grade)
+quality = quality_score_report(result.text, original=result.original, lang="en")
+print(f"Quality: {quality['score']:.2f} ({quality['grade']}) — {quality['verdict']}")
+print(quality["strengths"], quality["recommendations"][:1])
 
 # 4. Text analysis
 report = analyze("Text to analyze.", lang="en")
@@ -273,7 +280,7 @@ from texthumanize import (
     humanize_variants,
     # AI detection
     detect_ai, detect_ai_explain, detect_ai_batch, detect_ai_sentences,
-    detect_ai_mixed, audit_report,
+    detect_ai_mixed, audit_report, quality_score_report,
     # NLP tools
     paraphrase, analyze_tone, adjust_tone,
     detect_watermarks, clean_watermarks, watermark_report,
@@ -793,6 +800,7 @@ results = humanize_sentences(text, lang="en")
 | `adjust_tone(text, target, lang)` | Adjust formality to 7 levels |
 | `detect_ai_explain(text, lang)` | Explainable AI detector report with spans and suggested actions |
 | `audit_report(text, lang)` | Combined AI + watermark audit JSON |
+| `quality_score_report(text, original=None, lang)` | Unified Quality Score (0..1 + letter grade) across 7 dimensions |
 | `detect_watermarks(text)` | Detect 6 types of invisible watermarks |
 | `clean_watermarks(text)` | Remove all detected watermarks |
 | `watermark_report(text, lang)` | Unified Unicode + statistical watermark report |
@@ -1448,7 +1456,7 @@ reporting rules, and detector limitations.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  TextHumanize v0.28.4 — AI Score Benchmark              │
+│  TextHumanize v0.29.0 — AI Score Benchmark              │
 ├──────────────────────────────────────────────────────────┤
 │  EN (web/50):    94% → 27%    (reduction: -67pp)        │
 │  EN (web/60):    94% → 23%    (reduction: -71pp)        │
@@ -1840,7 +1848,14 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 
 ---
 
-## 🆕 What's New in v0.28.4
+## 🆕 What's New in v0.29.0
+
+### Unified quality scoring, eval corpus, and contributor packs (0.29.0)
+- **Unified TextHumanize Quality Score** — `quality_score_report()` (plus `texthumanize quality` and `--quality-score`) returns one explainable score (0..1) and a letter grade across seven dimensions: semantic similarity, naturalness, readability, AI-pattern resistance, watermark cleanliness, edit balance, and processing speed, with strengths, weaknesses, and recommendations.
+- **Licensed eval corpus + indexing** — packaged CC0 `text-humanize.eval_corpus.v1` (EN/RU/UK across human / raw-AI / lightly-edited / heavily-edited), with `load_eval_corpus()` filtering and `index_eval_corpus()` for deterministic, dimension-aware sampling.
+- **Contributor JSON packs** — public loaders and validators for AI markers, synonyms, collocations, and watermark samples, plus a `scripts/update_marker_packs.py` review workflow that merges only reviewer-approved candidates.
+- **Detector benchmark and CI quality gate** — offline `detector_benchmark()` / `texthumanize detector-benchmark` for human vs AI vs edited-AI evaluation by language, and `--fail-under-quality` for CI thresholds.
+- **Performance hardening** — short-text fast path, cached compiled regex and language packs, memory-bounded streaming/batch pipelines, lazy heavy imports for fast cold start, and a dependency-free hot-path profiler with p50/p95 and memory peaks.
 
 ### Explainable audit and safer humanization (0.28.4)
 - **Explainable AI detector reports** — `detect_ai_explain()` returns calibrated score, confidence interval, metric contributions, highlighted spans, sentence report, mixed-content shares, and suggested actions.

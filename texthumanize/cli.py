@@ -26,6 +26,7 @@ from texthumanize.core import (
     full_readability,
     humanize,
     paraphrase,
+    quality_score_report,
     spin,
     spin_variants,
     watermark_report,
@@ -1074,6 +1075,38 @@ def _handle_explain_command(args: argparse.Namespace, remaining: list[str]) -> N
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
 
+def _handle_quality_command(args: argparse.Namespace, remaining: list[str]) -> None:
+    """Handle 'quality' subcommand — unified TextHumanize Quality Score."""
+    quality_input = "-"
+    use_json = False
+    fast = False
+    reference_path: str | None = None
+    skip_next = False
+    for idx, item in enumerate(remaining):
+        if skip_next:
+            skip_next = False
+            continue
+        if item == "--json":
+            use_json = True
+        elif item == "--fast":
+            fast = True
+        elif item == "--reference":
+            if idx + 1 < len(remaining):
+                reference_path = remaining[idx + 1]
+                skip_next = True
+        elif item.startswith("--reference="):
+            reference_path = item.split("=", 1)[1]
+        elif not item.startswith("-"):
+            quality_input = item
+    text = _read_input(quality_input)
+    original = _read_input(reference_path) if reference_path else None
+    report = quality_score_report(text, original=original, lang=args.lang, fast=fast)
+    if use_json or getattr(args, "json", False):
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+
+
 # ═══════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════
@@ -1098,6 +1131,8 @@ Examples:
   texthumanize audit input.txt --json
   texthumanize watermark input.txt --json
   texthumanize explain input.txt --json
+  texthumanize quality input.txt --json
+  texthumanize quality output.txt --reference input.txt --json
   texthumanize detect input.txt
   texthumanize detect input.txt --verbose
   texthumanize train --samples 1000 --epochs 30
@@ -1112,7 +1147,7 @@ Examples:
         "input",
         help=(
             "Input file ('-' for stdin), or subcommand: audit, watermark, "
-            "explain, detect, train, benchmark, detector-benchmark"
+            "explain, quality, detect, train, benchmark, detector-benchmark"
         ),
     )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
@@ -1170,6 +1205,11 @@ Examples:
     )
     parser.add_argument("--detect-ai", action="store_true", help="AI detection mode")
     parser.add_argument("--audit", action="store_true", help="AI + watermark JSON audit")
+    parser.add_argument(
+        "--quality-score",
+        action="store_true",
+        help="Unified TextHumanize Quality Score JSON report",
+    )
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--paraphrase", action="store_true", help="Paraphrase text")
     parser.add_argument(
@@ -1249,6 +1289,9 @@ Examples:
     if args.input == "explain":
         _handle_explain_command(args, remaining)
         return
+    if args.input == "quality":
+        _handle_quality_command(args, remaining)
+        return
     if args.input == "train":
         _handle_train_command(args, remaining)
         return
@@ -1277,6 +1320,12 @@ Examples:
     if getattr(args, "audit", False):
         result_audit = audit_report(text, lang=args.lang)
         print(json.dumps(result_audit, ensure_ascii=False, indent=2))
+        return
+
+    # ── Unified quality score ──
+    if getattr(args, "quality_score", False):
+        result_quality = quality_score_report(text, lang=args.lang)
+        print(json.dumps(result_quality, ensure_ascii=False, indent=2))
         return
 
     # ── AI Detection ──

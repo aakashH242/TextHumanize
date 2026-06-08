@@ -8,6 +8,7 @@ import logging
 import math
 import re
 import threading
+import time
 import unicodedata
 from collections.abc import Callable, Iterable, Sized
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -3172,6 +3173,361 @@ def audit_report(
         "ai": ai,
         "watermark": watermark,
         "suggested_actions": actions,
+    }
+
+
+# ═════════════════════════════════════════════════════════════
+#  UNIFIED QUALITY SCORE
+# ═════════════════════════════════════════════════════════════
+
+_QUALITY_GRADE_BANDS: tuple[tuple[float, str], ...] = (
+    (0.90, "A+"),
+    (0.82, "A"),
+    (0.74, "B"),
+    (0.64, "C"),
+    (0.52, "D"),
+    (0.0, "F"),
+)
+
+# Default contribution weights for the composite score. The "full" set is
+# used when a reference (pre-humanization) text is supplied; otherwise
+# semantic_similarity and change_ratio are dropped and the rest renormalised.
+_QUALITY_WEIGHTS: dict[str, float] = {
+    "semantic_similarity": 0.26,
+    "naturalness": 0.22,
+    "ai_pattern_risk": 0.20,
+    "readability": 0.12,
+    "watermark_risk": 0.10,
+    "change_ratio": 0.06,
+    "speed": 0.04,
+}
+
+_QUALITY_LABELS: dict[str, str] = {
+    "semantic_similarity": "Semantic similarity",
+    "naturalness": "Naturalness",
+    "ai_pattern_risk": "AI-pattern resistance",
+    "readability": "Readability",
+    "watermark_risk": "Watermark cleanliness",
+    "change_ratio": "Edit balance",
+    "speed": "Processing speed",
+}
+
+
+def _quality_grade(score: float) -> str:
+    for threshold, grade in _QUALITY_GRADE_BANDS:
+        if score >= threshold:
+            return grade
+    return "F"
+
+
+def _quality_verdict(score: float) -> str:
+    if score >= 0.82:
+        return "excellent"
+    if score >= 0.68:
+        return "good"
+    if score >= 0.52:
+        return "fair"
+    return "poor"
+
+
+def _text_similarity(original: str, revised: str) -> float:
+    """Blended lexical similarity (Jaccard + sequence ratio), 0..1."""
+    if original == revised:
+        return 1.0
+    if not original or not revised:
+        return 0.0
+    orig_words = original.lower().split()
+    new_words = revised.lower().split()
+    if not orig_words or not new_words:
+        return 0.0
+    orig_set = set(orig_words)
+    new_set = set(new_words)
+    union = orig_set | new_set
+    jaccard = len(orig_set & new_set) / len(union) if union else 1.0
+    seq = difflib.SequenceMatcher(None, orig_words, new_words).ratio()
+    return _clamp(0.5 * jaccard + 0.5 * seq)
+
+
+def _readability_quality(grade_level: float) -> float:
+    """Map a Flesch-Kincaid grade level to a 0..1 readability quality score.
+
+    Broadly accessible prose (grade ~9) maps to ~1.0; very low or very high
+    grade levels are penalised on a 12-grade tolerance window.
+    """
+    if grade_level <= 0:
+        return 0.6  # degenerate / too short to grade reliably
+    return _clamp(1.0 - abs(grade_level - 9.0) / 12.0)
+
+
+def _change_balance_quality(change_ratio: float) -> float:
+    """Reward meaningful-but-not-destructive editing (0..1)."""
+    if change_ratio <= 0.0:
+        return 0.55  # nothing changed — neutral, not ideal
+    if change_ratio < 0.08:
+        return _clamp(0.6 + change_ratio / 0.08 * 0.4)
+    if change_ratio <= 0.32:
+        return 1.0  # sweet spot
+    if change_ratio < 0.60:
+        return _clamp(1.0 - (change_ratio - 0.32) / 0.28)
+    return _clamp(0.5 * (1.0 - (change_ratio - 0.60) / 0.40))
+
+
+def _quality_recommendations(dimensions: dict[str, Any]) -> list[str]:
+    recs: list[str] = []
+
+    def _dim(name: str) -> dict[str, Any]:
+        return dimensions.get(name) or {}
+
+    if _safe_float(_dim("ai_pattern_risk").get("raw_risk")) >= 0.5:
+        recs.append(
+            "AI-pattern risk is elevated; run humanize() (try a higher "
+            "intensity or the strict quality gate) and re-check."
+        )
+    if _safe_float(_dim("watermark_risk").get("raw_risk")) >= 0.4:
+        recs.append(
+            "Watermark signals detected; review watermark_report() and "
+            "publish clean_safe.text."
+        )
+    if "semantic_similarity" in dimensions and _safe_float(
+        _dim("semantic_similarity").get("value")
+    ) < 0.55:
+        recs.append(
+            "Semantic similarity to the reference is low; lower intensity or "
+            "enable minimal mode to preserve meaning."
+        )
+    if _safe_float(_dim("naturalness").get("value")) < 0.6:
+        recs.append(
+            "Naturalness is below target; vary sentence length and reduce "
+            "bureaucratic connectors."
+        )
+    if _safe_float(_dim("readability").get("value")) < 0.55:
+        recs.append(
+            "Readability is outside the accessible band; split long sentences "
+            "or simplify vocabulary for the target audience."
+        )
+    if "change_ratio" in dimensions and _safe_float(
+        _dim("change_ratio").get("raw_change_ratio")
+    ) > 0.5:
+        recs.append(
+            "Edit volume is high relative to the reference; consider minimal "
+            "mode to reduce drift."
+        )
+    if not recs:
+        recs.append("Quality is in a healthy range; no corrective action needed.")
+    return recs
+
+
+def quality_score_report(
+    text: str,
+    original: str | None = None,
+    lang: str = "auto",
+    *,
+    weights: dict[str, float] | None = None,
+    fast: bool = False,
+    target_chars_per_sec: float = 20000.0,
+) -> dict:
+    """Unified TextHumanize Quality Score across seven dimensions.
+
+    Combines semantic similarity, naturalness, readability, AI-pattern risk,
+    watermark risk, edit balance and processing speed into a single,
+    explainable score (0..1) with a letter grade, strengths/weaknesses and
+    actionable recommendations.
+
+    Args:
+        text: The text to score (typically the humanized output).
+        original: Optional pre-humanization reference. When provided, the
+            ``semantic_similarity`` and ``change_ratio`` dimensions are added;
+            otherwise they are dropped and the remaining weights renormalised.
+        lang: Language code or ``"auto"``.
+        weights: Optional overrides for per-dimension contribution weights.
+        fast: Use the lightweight detector and skip statistical watermark
+            hypotheses for a faster, slightly coarser score.
+        target_chars_per_sec: Throughput that maps to a perfect speed score.
+
+    Returns:
+        A ``text-humanize.quality_score.v1`` dict.
+    """
+    if not isinstance(text, str):
+        raise ConfigError(f"Expected str, got {type(text).__name__}")
+
+    started = time.perf_counter()
+
+    if not text or not text.strip():
+        elapsed_ms = (time.perf_counter() - started) * 1000.0
+        return {
+            "schema_version": "text-humanize.quality_score.v1",
+            "score": 0.0,
+            "score_100": 0.0,
+            "grade": "F",
+            "verdict": "poor",
+            "lang": lang if lang != "auto" else "en",
+            "has_reference": original is not None,
+            "dimensions": {},
+            "strengths": [],
+            "weaknesses": [],
+            "recommendations": [
+                "Provide non-empty text to compute a quality score."
+            ],
+            "timing": {"latency_ms": round(elapsed_ms, 3), "chars_per_sec": 0.0},
+        }
+
+    resolved_lang = lang
+    if lang == "auto":
+        resolved_lang = _detect_language(text)
+
+    report = analyze(text, lang=resolved_lang)
+    artificiality = _clamp(
+        _safe_float(getattr(report, "artificiality_score", 0.0)) / 100.0
+    )
+    naturalness = _clamp(1.0 - artificiality)
+    readability = _readability_quality(
+        _safe_float(getattr(report, "flesch_kincaid_grade", 0.0))
+    )
+
+    if fast:
+        ai = detect_ai_fast(text, lang=resolved_lang)
+        ai_risk = _clamp(_safe_float(ai.get("combined_score")))
+        ai_verdict = ai.get("verdict")
+        ai_source = "detect_ai_fast"
+    else:
+        ai = detect_ai_explain(
+            text, lang=resolved_lang, include_sentences=False
+        )
+        ai_risk = _clamp(_safe_float(ai.get("score")))
+        ai_verdict = ai.get("verdict")
+        ai_source = "detect_ai_explain"
+
+    wm = watermark_report(
+        text, lang=resolved_lang, include_statistical=not fast
+    )
+    watermark_risk = _clamp(_safe_float(wm.get("risk_score")))
+
+    dimensions: dict[str, Any] = {}
+
+    if original is not None:
+        sim = _text_similarity(original, text)
+        change_result = HumanizeResult(
+            original=original,
+            text=text,
+            lang=resolved_lang,
+            profile="web",
+            intensity=60,
+        )
+        change = change_result.change_ratio
+        dimensions["semantic_similarity"] = {
+            "label": _QUALITY_LABELS["semantic_similarity"],
+            "value": round(sim, 4),
+            "detail": "Lexical + sequence similarity vs. the reference text.",
+        }
+        dimensions["change_ratio"] = {
+            "label": _QUALITY_LABELS["change_ratio"],
+            "value": round(_change_balance_quality(change), 4),
+            "raw_change_ratio": round(change, 4),
+            "detail": "Editing should be meaningful but not destructive.",
+        }
+
+    dimensions["naturalness"] = {
+        "label": _QUALITY_LABELS["naturalness"],
+        "value": round(naturalness, 4),
+        "artificiality_score": round(
+            _safe_float(getattr(report, "artificiality_score", 0.0)), 2
+        ),
+        "detail": "Inverse of the artificiality score from analyze().",
+    }
+    dimensions["readability"] = {
+        "label": _QUALITY_LABELS["readability"],
+        "value": round(readability, 4),
+        "flesch_kincaid_grade": round(
+            _safe_float(getattr(report, "flesch_kincaid_grade", 0.0)), 2
+        ),
+        "detail": "Closeness to a broadly accessible reading grade.",
+    }
+    dimensions["ai_pattern_risk"] = {
+        "label": _QUALITY_LABELS["ai_pattern_risk"],
+        "value": round(_clamp(1.0 - ai_risk), 4),
+        "raw_risk": round(ai_risk, 4),
+        "verdict": ai_verdict,
+        "source": ai_source,
+        "detail": "Resistance to the built-in AI detector (higher is better).",
+    }
+    dimensions["watermark_risk"] = {
+        "label": _QUALITY_LABELS["watermark_risk"],
+        "value": round(_clamp(1.0 - watermark_risk), 4),
+        "raw_risk": round(watermark_risk, 4),
+        "has_watermarks": bool(wm.get("has_watermarks")),
+        "detail": "Absence of Unicode/statistical watermark signals.",
+    }
+
+    elapsed_ms = (time.perf_counter() - started) * 1000.0
+    chars = len(text)
+    chars_per_sec = (
+        chars / (elapsed_ms / 1000.0) if elapsed_ms > 0 else float(chars)
+    )
+    speed_value = (
+        _clamp(chars_per_sec / target_chars_per_sec)
+        if target_chars_per_sec > 0
+        else 1.0
+    )
+    dimensions["speed"] = {
+        "label": _QUALITY_LABELS["speed"],
+        "value": round(speed_value, 4),
+        "chars_per_sec": round(chars_per_sec, 1),
+        "latency_ms": round(elapsed_ms, 3),
+        "detail": "Throughput relative to the target chars/sec.",
+    }
+
+    base_weights = dict(_QUALITY_WEIGHTS)
+    if weights:
+        for key, value in weights.items():
+            base_weights[key] = float(value)
+    active = {
+        key: weight
+        for key, weight in base_weights.items()
+        if key in dimensions and weight > 0
+    }
+    total_weight = sum(active.values()) or 1.0
+    composite = 0.0
+    for key, weight in active.items():
+        normalised = weight / total_weight
+        dimensions[key]["weight"] = round(normalised, 4)
+        composite += _safe_float(dimensions[key]["value"]) * normalised
+    for key in dimensions:
+        dimensions[key].setdefault("weight", 0.0)
+
+    composite = _clamp(composite)
+
+    ranked = sorted(
+        active,
+        key=lambda key: _safe_float(dimensions[key]["value"]),
+        reverse=True,
+    )
+    strengths = [
+        dimensions[key]["label"]
+        for key in ranked
+        if _safe_float(dimensions[key]["value"]) >= 0.75
+    ][:3]
+    weaknesses = [
+        dimensions[key]["label"]
+        for key in reversed(ranked)
+        if _safe_float(dimensions[key]["value"]) < 0.6
+    ][:3]
+
+    return {
+        "schema_version": "text-humanize.quality_score.v1",
+        "score": round(composite, 4),
+        "score_100": round(composite * 100.0, 1),
+        "grade": _quality_grade(composite),
+        "verdict": _quality_verdict(composite),
+        "lang": resolved_lang,
+        "has_reference": original is not None,
+        "dimensions": dimensions,
+        "strengths": strengths,
+        "weaknesses": weaknesses,
+        "recommendations": _quality_recommendations(dimensions),
+        "timing": {
+            "latency_ms": round(elapsed_ms, 3),
+            "chars_per_sec": round(chars_per_sec, 1),
+        },
     }
 
 
