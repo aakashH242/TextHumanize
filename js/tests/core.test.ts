@@ -8,10 +8,12 @@ import { TextAnalyzer } from '../src/analyzer';
 import { Pipeline } from '../src/pipeline';
 import { VERSION } from '../src/version';
 import { getLangPack, hasDeepSupport, supportedLanguages } from '../src/lang';
+import pkg from '../package.json';
 
 describe('Version', () => {
-  it('should export version string', () => {
-    expect(VERSION).toBe('0.28.4');
+  it('should export a semver string in sync with package.json', () => {
+    expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(VERSION).toBe(pkg.version);
   });
 });
 
