@@ -1,0 +1,68 @@
+{
+  "schema_version": "text-humanize.contributor_pack.v1",
+  "pack": "ai_markers",
+  "name": "Contributor AI marker examples",
+  "license": {
+    "id": "CC0-1.0",
+    "name": "Creative Commons Zero 1.0 Universal"
+  },
+  "description": "Small, synthetic examples that show how to contribute AI-like marker candidates safely.",
+  "contribution_rules": [
+    "Use synthetic or self-authored examples only.",
+    "Include false-positive guard notes for formal human writing.",
+    "Prefer neutral suggested actions over detector-bypass claims."
+  ],
+  "entries": [
+    {
+      "id": "ai_marker_en_support_001",
+      "lang": "en",
+      "domain": "support",
+      "category": "formulaic_phrase",
+      "marker": "We apologize for any inconvenience this may have caused",
+      "severity": "medium",
+      "suggested_actions": [
+        "replace with a direct ownership statement",
+        "add one concrete next step"
+      ],
+      "false_positive_guards": [
+        "acceptable in legal or regulated incident notices"
+      ],
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "ai_marker_en_product_001",
+      "lang": "en",
+      "domain": "product",
+      "category": "generic_value_claim",
+      "marker": "seamlessly integrates into your existing workflow",
+      "severity": "medium",
+      "suggested_actions": [
+        "name the specific integration point",
+        "replace generic value language with a concrete user outcome"
+      ],
+      "false_positive_guards": [
+        "do not flag when followed by a named product, API, or setup step"
+      ],
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "ai_marker_en_docs_001",
+      "lang": "en",
+      "domain": "docs",
+      "category": "overexplained_transition",
+      "marker": "It is important to note that",
+      "severity": "low",
+      "suggested_actions": [
+        "delete the transition when the sentence stands alone",
+        "start with the actionable condition"
+      ],
+      "false_positive_guards": [
+        "allow in safety-critical warnings when emphasis is required"
+      ],
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    }
+  ]
+}

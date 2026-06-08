@@ -51,6 +51,7 @@ legal, academic, documentation, finance, medical, support, or product copy.
 
 **Suggested files:**
 
+- `texthumanize/data/contributor_ai_markers_v1.json`
 - `texthumanize/ai_markers.py`
 - `tests/test_audit_round2.py`
 - `tests/test_golden.py`
@@ -60,6 +61,7 @@ legal, academic, documentation, finance, medical, support, or product copy.
 - Add domain-specific AI-like markers and safe suggested actions.
 - Include at least 5 positive examples and 3 false-positive guard examples.
 - Do not make formal human-written text score worse without reason.
+- Run `validate_contributor_pack("ai_markers")` after JSON edits.
 
 ### Add Low-Risk Replacement Suggestions
 
@@ -68,6 +70,7 @@ meaning.
 
 **Suggested files:**
 
+- `texthumanize/data/contributor_synonyms_v1.json`
 - `texthumanize/core.py`
 - `texthumanize/ai_markers.py`
 - `tests/test_api_wrappers.py`
@@ -77,6 +80,25 @@ meaning.
 - Add suggestions for at least 10 high-frequency AI-like phrases.
 - Suggestions must be neutral and not claim external detector bypass.
 - Update tests for `detect_ai_explain()` output shape.
+- Run `validate_contributor_pack("synonyms")` after JSON edits.
+
+### Add Collocation Guard Examples
+
+**Goal:** Improve natural replacement safety by documenting phrase pairs that
+should not be broken by synonym substitution.
+
+**Suggested files:**
+
+- `texthumanize/data/contributor_collocations_v1.json`
+- `texthumanize/collocation_engine.py`
+- `tests/test_v015_features.py`
+
+**Acceptance criteria:**
+
+- Add common phrases with `preferred_contexts` and `blocked_replacements`.
+- Keep examples synthetic and domain-safe.
+- Add or update a deterministic collocation guard regression test.
+- Run `validate_contributor_pack("collocations")` after JSON edits.
 
 ## Fixture Packs
 
@@ -126,6 +148,7 @@ characters.
 
 **Suggested files:**
 
+- `texthumanize/data/contributor_watermark_samples_v1.json`
 - `tests/test_watermark.py`
 - `texthumanize/watermark.py`
 
@@ -135,6 +158,7 @@ characters.
   fullwidth, variation selectors, or math homoglyphs.
 - Assert positions, safe replacement, and clean text.
 - Avoid changing lexical content in `clean_safe()`.
+- Run `validate_contributor_pack("watermark_samples")` after JSON edits.
 
 ### Add Statistical Watermark Hypothesis Sample
 

@@ -137,6 +137,30 @@ texthumanize detector-benchmark --langs en,ru,uk --json
 
 ---
 
+### `list_contributor_packs() → dict`
+
+Returns the packaged contributor JSON packs for AI markers, synonyms,
+collocations, and watermark samples. Each pack is small, synthetic,
+CC0-licensed, and intended as a schema example for community updates.
+
+```python
+from texthumanize import (
+    list_contributor_packs,
+    load_contributor_pack,
+    validate_contributor_pack,
+)
+
+packs = list_contributor_packs()
+print(packs["synonyms"]["entry_count"])
+
+support_synonyms = load_contributor_pack("synonyms", domains=["support"])
+print(support_synonyms["entries"][0]["replacements"])
+
+assert validate_contributor_pack("watermark_samples")["valid"]
+```
+
+---
+
 ### `humanize_batch(texts, **options) → list[HumanizeResult]`
 
 Process multiple texts. Each text gets a unique seed (`base_seed + index`).

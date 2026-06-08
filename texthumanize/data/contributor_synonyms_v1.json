@@ -1,0 +1,74 @@
+{
+  "schema_version": "text-humanize.contributor_pack.v1",
+  "pack": "synonyms",
+  "name": "Contributor synonym examples",
+  "license": {
+    "id": "CC0-1.0",
+    "name": "Creative Commons Zero 1.0 Universal"
+  },
+  "description": "Small, synthetic examples for safe phrase and word replacement contributions.",
+  "contribution_rules": [
+    "Replacements must preserve meaning and register.",
+    "Avoid rare, archaic, offensive, or region-locked words unless explicitly tagged.",
+    "Include constraints that prevent unsafe domain substitutions."
+  ],
+  "entries": [
+    {
+      "id": "syn_en_general_001",
+      "lang": "en",
+      "domain": "general",
+      "source_phrase": "utilize",
+      "replacements": [
+        "use"
+      ],
+      "register": "plain",
+      "constraints": {
+        "preserve_meaning": true,
+        "avoid_when_followed_by": [
+          "legal definition",
+          "quoted text"
+        ]
+      },
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "syn_en_support_001",
+      "lang": "en",
+      "domain": "support",
+      "source_phrase": "at your earliest convenience",
+      "replacements": [
+        "when you have a moment",
+        "when you can"
+      ],
+      "register": "professional",
+      "constraints": {
+        "preserve_meaning": true,
+        "avoid_when_urgency_is_critical": true
+      },
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "syn_en_product_001",
+      "lang": "en",
+      "domain": "product",
+      "source_phrase": "robust solution",
+      "replacements": [
+        "reliable tool",
+        "stable setup"
+      ],
+      "register": "plain",
+      "constraints": {
+        "preserve_meaning": true,
+        "requires_context": [
+          "software",
+          "workflow",
+          "operations"
+        ]
+      },
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    }
+  ]
+}

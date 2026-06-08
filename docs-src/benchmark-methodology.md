@@ -47,6 +47,11 @@ can select fixtures by `languages`, `labels`, `domains`, `length_buckets`, and
 `sources`; `index_eval_corpus()` exposes deterministic sample ids and counts for
 each of those dimensions.
 
+Contributor data examples are packaged as CC0 JSON packs in `texthumanize/data/`
+and exposed through `list_contributor_packs()`, `load_contributor_pack()`, and
+`validate_contributor_pack()`. Use those schemas for AI marker candidates,
+safe synonym replacements, collocation guards, and watermark regression samples.
+
 ## Detector Benchmarks
 
 TextHumanize detector benchmarks measure the built-in detector only:

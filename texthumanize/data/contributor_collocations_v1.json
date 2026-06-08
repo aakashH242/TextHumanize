@@ -1,0 +1,71 @@
+{
+  "schema_version": "text-humanize.contributor_pack.v1",
+  "pack": "collocations",
+  "name": "Contributor collocation examples",
+  "license": {
+    "id": "CC0-1.0",
+    "name": "Creative Commons Zero 1.0 Universal"
+  },
+  "description": "Small, synthetic examples for collocation guard and natural phrase contributions.",
+  "contribution_rules": [
+    "Use phrases that are common and domain-safe.",
+    "List replacements that should be blocked when they break the phrase.",
+    "Include preferred contexts so reviewers can add deterministic tests."
+  ],
+  "entries": [
+    {
+      "id": "colloc_en_general_001",
+      "lang": "en",
+      "domain": "general",
+      "phrase": "heavy rain",
+      "strength": 5.0,
+      "preferred_contexts": [
+        "weather",
+        "travel",
+        "outdoor plans"
+      ],
+      "blocked_replacements": [
+        "weighty rain",
+        "large rain"
+      ],
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "colloc_en_product_001",
+      "lang": "en",
+      "domain": "product",
+      "phrase": "customer support",
+      "strength": 4.5,
+      "preferred_contexts": [
+        "help desk",
+        "ticket handling",
+        "service operations"
+      ],
+      "blocked_replacements": [
+        "customer backing",
+        "buyer support"
+      ],
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "colloc_en_docs_001",
+      "lang": "en",
+      "domain": "docs",
+      "phrase": "error message",
+      "strength": 4.0,
+      "preferred_contexts": [
+        "developer docs",
+        "debugging",
+        "API reference"
+      ],
+      "blocked_replacements": [
+        "mistake message",
+        "fault note"
+      ],
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    }
+  ]
+}

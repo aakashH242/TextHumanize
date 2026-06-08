@@ -209,6 +209,19 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "detector_benchmark": ("texthumanize.benchmarks", "detector_benchmark"),
     "index_eval_corpus": ("texthumanize.benchmarks", "index_eval_corpus"),
     "load_eval_corpus": ("texthumanize.benchmarks", "load_eval_corpus"),
+    # contributor_packs.py
+    "list_contributor_packs": (
+        "texthumanize.contributor_packs",
+        "list_contributor_packs",
+    ),
+    "load_contributor_pack": (
+        "texthumanize.contributor_packs",
+        "load_contributor_pack",
+    ),
+    "validate_contributor_pack": (
+        "texthumanize.contributor_packs",
+        "validate_contributor_pack",
+    ),
     # diff_report.py
     "explain_html": ("texthumanize.diff_report", "explain_html"),
     "explain_json_patch": ("texthumanize.diff_report", "explain_json_patch"),
@@ -503,10 +516,12 @@ __all__ = [
     "index_eval_corpus",
     "is_cjk_text",
     "list_ash_presets",
+    "list_contributor_packs",
     "list_corpus_profiles",
     "list_style_presets",
     "load_ai_markers",
     "load_all_markers",
+    "load_contributor_pack",
     "load_eval_corpus",
     "model_cognition",
     "neural_paraphrase",
@@ -534,6 +549,7 @@ __all__ = [
     "transfer_signature",
     "uniqueness_score",
     "update_markers",
+    "validate_contributor_pack",
     "word_naturalness",
     "word_perplexity",
     "watermark_report",

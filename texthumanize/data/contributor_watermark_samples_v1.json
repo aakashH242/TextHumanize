@@ -1,0 +1,56 @@
+{
+  "schema_version": "text-humanize.contributor_pack.v1",
+  "pack": "watermark_samples",
+  "name": "Contributor watermark sample examples",
+  "license": {
+    "id": "CC0-1.0",
+    "name": "Creative Commons Zero 1.0 Universal"
+  },
+  "description": "Small, synthetic examples for Unicode and statistical watermark regression contributions.",
+  "contribution_rules": [
+    "Use synthetic samples only; never include customer or copied text.",
+    "State the expected finding and safe cleaned output.",
+    "Keep examples short enough for deterministic unit tests."
+  ],
+  "entries": [
+    {
+      "id": "wm_en_zero_width_001",
+      "lang": "en",
+      "domain": "general",
+      "category": "zero_width",
+      "sample_text": "The report is ready\\u200b for review.",
+      "expected_findings": [
+        "zero_width_characters"
+      ],
+      "safe_clean_text": "The report is ready for review.",
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "wm_en_homoglyph_001",
+      "lang": "en",
+      "domain": "docs",
+      "category": "homoglyph",
+      "sample_text": "The API resp\\u03bfnse includes a request id.",
+      "expected_findings": [
+        "homoglyph_substitution"
+      ],
+      "safe_clean_text": "The API response includes a request id.",
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "wm_en_spacing_001",
+      "lang": "en",
+      "domain": "support",
+      "category": "spacing",
+      "sample_text": "Please check the attached log.   ",
+      "expected_findings": [
+        "trailing_space_steganography"
+      ],
+      "safe_clean_text": "Please check the attached log.",
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
+    }
+  ]
+}

@@ -697,6 +697,13 @@ print(index_eval_corpus()["counts"]["domain"])
 
 report = detector_benchmark(languages=["en", "ru", "uk"])
 print(report["per_language"]["en"]["avg_score_by_label"])
+
+# Contributor data packs: AI markers, synonyms, collocations, watermark samples
+from texthumanize import list_contributor_packs, load_contributor_pack
+
+print(list_contributor_packs().keys())
+support_synonyms = load_contributor_pack("synonyms", domains=["support"])
+print(support_synonyms["entries"][0]["replacements"])
 ```
 
 ---
