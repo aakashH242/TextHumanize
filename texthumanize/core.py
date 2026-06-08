@@ -3512,10 +3512,11 @@ def quality_score_report(
         if _safe_float(dimensions[key]["value"]) < 0.6
     ][:3]
 
+    score_rounded = round(composite, 4)
     return {
         "schema_version": "text-humanize.quality_score.v1",
-        "score": round(composite, 4),
-        "score_100": round(composite * 100.0, 1),
+        "score": score_rounded,
+        "score_100": round(score_rounded * 100.0, 1),
         "grade": _quality_grade(composite),
         "verdict": _quality_verdict(composite),
         "lang": resolved_lang,
