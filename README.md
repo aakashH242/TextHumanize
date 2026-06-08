@@ -18,7 +18,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 [![PHP 8.1+](https://img.shields.io/badge/php-8.1+-777BB4.svg?logo=php&logoColor=white)](https://www.php.net/)
 &nbsp;&nbsp;
 [![CI](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-2157%20passed-2ea44f.svg?logo=pytest&logoColor=white)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-2241%20passed-2ea44f.svg?logo=pytest&logoColor=white)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
 &nbsp;&nbsp;
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)]()
 [![PyPI](https://img.shields.io/pypi/v/texthumanize.svg?logo=pypi&logoColor=white)](https://pypi.org/project/texthumanize/)
@@ -26,7 +26,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 
 <br/>
 
-**235,000+ lines of code** · **122 Python modules** · **38-stage pipeline** · **25 languages + universal** · **2,157 tests**
+**240,000+ lines of code** · **130 Python modules** · **38-stage pipeline** · **25 languages + universal** · **2,241 tests**
 
 **3 proprietary technologies:** PHANTOM™ (gradient-guided internal score optimization) · ASH™ (adaptive signature humanization) · SentenceValidator™ (interstage quality gate)
 
@@ -90,7 +90,7 @@ TextHumanize is a **pure-algorithmic text processing engine** that transforms AI
 
 **Built-in toolkit:** AI Detection (3 detectors) · Paraphrasing · Tone Analysis · Watermark Cleaning · Content Spinning · Coherence Analysis · Readability Scoring · Stylistic Fingerprinting · Auto-Tuner · Perplexity Analysis · Plagiarism Detection · Grammar Check · Morphology Engine · Neural LM · **Async API** · **SSE Streaming**
 
-**Platforms:** Python (full — 122 modules) · TypeScript/JavaScript (core) · PHP (full)
+**Platforms:** Python (full — 130 modules) · TypeScript/JavaScript (core) · PHP (full)
 
 **For business:** SaaS integration · REST API with SSE streaming · Docker deployment · Bulk processing · Custom dictionaries · On-prem enterprise · White-label ready
 
@@ -117,7 +117,7 @@ TextHumanize is a **pure-algorithmic text processing engine** that transforms AI
 | 📊 | **Full analytics** | Readability (6 indices), coherence, plagiarism, stylometric fingerprint, content health score |
 | 🎭 | **Tone control** | Analyze and adjust formality across 7 levels |
 | 📚 | **2,944 dictionary entries** | EN 1,733 + RU 1,345 + UK 1,042 + DE 874 + FR 718 + ES 749 + more |
-| 🏢 | **Enterprise-ready** | Dual license, 2,157+ tests, CI/CD, REST API, Docker, on-prem deployment |
+| 🏢 | **Enterprise-ready** | Dual license, 2,241+ tests, CI/CD, REST API, Docker, on-prem deployment |
 | 🛡️ | **Secure by design** | Input limits, zero network calls, linear-time regex, no eval/exec |
 | 📝 | **Full auditability** | Every call returns `change_ratio`, `quality_score`, `similarity`, `explain()` report |
 
@@ -489,8 +489,8 @@ AI score: 75% → 17%  (reduction: 58 percentage points)
 | Pipeline stages | **38** | 2–4 |
 | Languages | **25 + universal** | 1–2 |
 | AI detection | ✅ 3-layer (18 + 35 + MLP) | ❌ |
-| Python tests | **2,157** | 10–50 |
-| Codebase size | **235,000+ lines** | 500–2K |
+| Python tests | **2,241** | 10–50 |
+| Codebase size | **240,000+ lines** | 500–2K |
 | Platforms | Python + JS + PHP | Single |
 | Plugin system | ✅ | ❌ |
 | Tone analysis | ✅ 7 levels | ❌ |
@@ -1496,7 +1496,7 @@ reporting rules, and detector limitations.
 ## 🏗️ Architecture
 
 ```
-texthumanize/                        # 122 Python modules, 235,000+ lines
+texthumanize/                        # 130 Python modules, 240,000+ lines
 ├── core.py                          # Facade: 28+ public functions (2,391 lines)
 ├── pipeline.py                      # 38-stage pipeline + adaptive intensity (1,553 lines)
 ├── sentence_validator.py            # SentenceValidator™: interstage quality gate (350 lines)
@@ -1678,14 +1678,14 @@ cd php/ && composer install && vendor/bin/phpunit
 
 | Platform | Tests | Status |
 |:---------|------:|:------:|
-| **Python** (pytest, 3.9–3.13) | 2,157 | ✅ All passing |
+| **Python** (pytest, 3.9–3.13) | 2,241 | ✅ All passing |
 | **PHP** (PHPUnit, 8.1–8.3) | 223 | ✅ All passing |
 | **TypeScript** (Jest) | 28 | ✅ All passing |
 | **Total** | **2,408** | ✅ |
 
 ```bash
 # Python
-pytest -q                          # 2,157 passed
+pytest -q                          # 2,241 passed
 pytest --cov=texthumanize          # Coverage report
 ruff check texthumanize/           # Lint
 mypy texthumanize/                 # Type check
@@ -1903,7 +1903,7 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 - **Final sanitization** in `run()` method catches post-loop residual artifacts
 
 ### Stats
-- **2,157 tests** · **122 modules** · **235,000+ lines** · **25 languages** · **38-stage pipeline**
+- **2,241 tests** · **130 modules** · **240,000+ lines** · **25 languages** · **38-stage pipeline**
 
 ---
 
