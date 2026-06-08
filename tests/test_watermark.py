@@ -103,3 +103,35 @@ class TestModuleFunctions:
         assert "zero_width_character" in kinds
         assert "homoglyph_substitution" in kinds
         assert report["clean_safe"]["changed"] is True
+
+
+class TestStatisticalWatermarkCalibration:
+    """Regression for the statistical false-positive fix and long-text cap."""
+
+    def test_clean_prose_not_flagged(self) -> None:
+        import texthumanize as th
+        clean = (
+            "The team reviewed the quarterly report on Monday and agreed on the "
+            "next steps before lunch, then shared a short summary with everyone "
+            "in the office."
+        )
+        report = th.watermark_report(clean, lang="en", include_statistical=True)
+        # A marginal z (1.5-2.0) must not flip has_watermarks on clean prose.
+        assert report["has_watermarks"] is False
+
+    def test_long_text_is_bounded(self) -> None:
+        import time
+
+        import texthumanize as th
+        sentences = [
+            "The team reviewed the report on Monday.",
+            "She fixed the bug before lunch and shipped it.",
+            "Our revenue grew last quarter across regions.",
+            "The cache updates overnight so check tomorrow.",
+        ]
+        big = " ".join(sentences[i % len(sentences)] for i in range(2600))
+        assert len(big) > 90_000
+        started = time.perf_counter()
+        th.watermark_report(big, lang="en", include_statistical=True)
+        # Token cap + diff short-circuit keep this well under the old ~44s.
+        assert time.perf_counter() - started < 10.0

@@ -7,6 +7,7 @@ from texthumanize.quality_metrics import (
     acceptance_rate,
     benchmark_leaderboard,
     count_regression_examples,
+    detector_calibration,
     funnel_metrics,
     release_snapshot,
     semantic_drift_rate,
@@ -68,6 +69,33 @@ class TestWatermarkEval:
         assert result["false_negative_rate"] == 0.0
         assert result["false_positive_rate"] == 0.0
         assert result["by_category"]
+
+    def test_statistical_category_covered(self) -> None:
+        result = watermark_eval()
+        # Both Unicode and statistical watermark branches are exercised.
+        assert "statistical" in result["by_category"]
+        stat = result["by_category"]["statistical"]
+        assert stat["positives"] >= 1
+        assert stat["false_negatives"] == 0
+
+
+class TestDetectorCalibration:
+    def test_calibration_report(self) -> None:
+        report = detector_calibration()
+        assert report["schema_version"] == "text-humanize.detector_calibration.v1"
+        assert report["samples"] > 0
+        assert 0.0 <= report["recommended_threshold"] <= 1.0
+        assert report["best"] is not None
+        assert 0.0 <= report["best"]["f1"] <= 1.0
+        # Every sweep point has a valid confusion matrix.
+        for point in report["sweep"]:
+            assert {"tp", "fp", "tn", "fn", "precision", "recall", "f1"} <= set(point)
+        assert report["per_language"]
+
+    def test_external_comparison(self) -> None:
+        report = detector_calibration(external_scores={"en_raw_ai_product_001": 0.95})
+        assert report["external_comparison"]["compared"] == 1
+        assert 0.0 <= report["external_comparison"]["agreement_rate"] <= 1.0
 
 
 class TestRegressionCountAndFunnel:

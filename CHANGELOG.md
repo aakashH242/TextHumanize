@@ -5,6 +5,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-06-09
+
+### Added
+- **Detector calibration harness** — `detector_calibration()` sweeps decision thresholds over the labelled eval corpus and reports precision/recall/F1/accuracy at each, the best-F1 threshold (overall and per language), heavily-edited-AI recall, and an optional agreement comparison against externally supplied scores (e.g. GPTZero). Also `scripts/calibrate_detector.py`.
+- **Larger eval corpus** — expanded to 6 languages (EN/RU/UK/DE/FR/ES) and 10 domains (article, blog, docs, landing, product, support, seo, academic, legal, social) so the leaderboard, snapshot and calibration metrics are more representative.
+- **Statistical watermark coverage** — added a statistical-watermark sample so `watermark_eval()` exercises both the Unicode and statistical branches.
+- **Brand voice — banned replacements** — `make_brand_voice(banned_replacements=...)` is now enforced: `brand_voice_lock()` repairs any forbidden substitute back to the canonical term and reports the repairs.
+
+### Changed
+- **Faster watermark forensics on long texts** — the statistical scan is capped to a few thousand tokens (ample statistical power) and `watermark_report` short-circuits the diff when nothing changed; `watermark_report` on 100k characters dropped from ~44s to under 0.5s.
+
+### Fixed
+- **Statistical watermark false positives** — a marginal `possible_watermark` verdict (z 1.5-2.0) no longer flips `has_watermarks` to true on ordinary prose; the binary flag now requires at least a weak-watermark z-score, consistent with the hypothesis gate.
+
 ## [0.30.0] - 2026-06-08
 
 ### Added

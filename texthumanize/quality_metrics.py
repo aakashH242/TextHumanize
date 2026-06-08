@@ -27,6 +27,7 @@ __all__ = [
     "acceptance_rate",
     "benchmark_leaderboard",
     "count_regression_examples",
+    "detector_calibration",
     "funnel_metrics",
     "release_snapshot",
     "semantic_drift_rate",
@@ -336,6 +337,9 @@ def watermark_eval(
     for sample in samples:
         lang = str(sample.get("lang", "en"))
         category = str(sample.get("category", "unknown"))
+        # Statistical samples need the (slower) statistical channel; Unicode
+        # samples only need the fast channel.
+        use_statistical = category == "statistical"
         cat = by_category.setdefault(category, {
             "positives": 0, "negatives": 0,
             "false_negatives": 0, "false_positives": 0,
@@ -344,7 +348,7 @@ def watermark_eval(
         clean = sample.get("safe_clean_text")
 
         detected_marked = bool(
-            watermark_report(marked, lang=lang, include_statistical=False).get("has_watermarks")
+            watermark_report(marked, lang=lang, include_statistical=use_statistical).get("has_watermarks")
         )
         positives += 1
         cat["positives"] += 1
@@ -355,7 +359,7 @@ def watermark_eval(
         detected_clean = None
         if clean is not None:
             detected_clean = bool(
-                watermark_report(clean, lang=lang, include_statistical=False).get("has_watermarks")
+                watermark_report(clean, lang=lang, include_statistical=use_statistical).get("has_watermarks")
             )
             negatives += 1
             cat["negatives"] += 1
@@ -417,6 +421,141 @@ def count_regression_examples() -> dict[str, Any]:
         "total": len(bank) + len(corpus_list),
         "bad_output_by_origin": dict(sorted(by_source.items())),
     }
+
+
+# ─────────────────────────────────────────────────────────────
+#  Detector calibration
+# ─────────────────────────────────────────────────────────────
+
+# Binary mapping for calibration: human is the negative class; raw and lightly
+# edited AI are positive. Heavily edited AI is reported separately because it is
+# expected to be hard to flag and would otherwise distort the threshold sweep.
+_POSITIVE_LABELS = {"raw_ai", "lightly_edited_ai"}
+_NEGATIVE_LABELS = {"human"}
+
+
+def detector_calibration(
+    corpus: list[dict[str, Any]] | None = None,
+    *,
+    languages: list[str] | None = None,
+    thresholds: list[float] | None = None,
+    default_threshold: float = 0.50,
+    external_scores: dict[str, float] | None = None,
+) -> dict[str, Any]:
+    """Calibrate the built-in detector against labelled corpus samples.
+
+    Sweeps decision thresholds and reports precision/recall/F1/accuracy at each,
+    the best-F1 threshold (overall and per language), and the metrics at the
+    current ``default_threshold``. Heavily-edited-AI recall is reported
+    separately. ``external_scores`` (e.g. fetched from GPTZero by id) enables an
+    agreement comparison without this library performing any network calls.
+    """
+    from texthumanize.benchmarks import _canonical_label, load_eval_corpus
+    from texthumanize.core import detect_ai
+
+    if corpus is None:
+        loaded = load_eval_corpus()
+        samples = loaded if isinstance(loaded, list) else []
+    else:
+        samples = list(corpus)
+    if languages:
+        samples = [s for s in samples if s.get("lang") in set(languages)]
+
+    if thresholds is None:
+        thresholds = [round(0.05 * i, 2) for i in range(2, 19)]  # 0.10 .. 0.90
+
+    scored: list[dict[str, Any]] = []
+    for sample in samples:
+        label = _canonical_label(str(sample.get("label", "")))
+        detection = detect_ai(sample["text"], lang=str(sample.get("lang", "auto")))
+        score = float(detection.get("combined_score", detection.get("score", 0.0)))
+        scored.append({
+            "id": sample.get("id"),
+            "lang": sample.get("lang"),
+            "label": label,
+            "score": score,
+        })
+
+    def _metrics_at(rows: list[dict[str, Any]], thr: float) -> dict[str, Any]:
+        tp = fp = tn = fn = 0
+        for row in rows:
+            if row["label"] in _POSITIVE_LABELS:
+                if row["score"] >= thr:
+                    tp += 1
+                else:
+                    fn += 1
+            elif row["label"] in _NEGATIVE_LABELS:
+                if row["score"] >= thr:
+                    fp += 1
+                else:
+                    tn += 1
+        precision = tp / (tp + fp) if (tp + fp) else 0.0
+        recall = tp / (tp + fn) if (tp + fn) else 0.0
+        f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 0.0
+        total = tp + fp + tn + fn
+        accuracy = (tp + tn) / total if total else 0.0
+        fpr = fp / (fp + tn) if (fp + tn) else 0.0
+        return {
+            "threshold": thr,
+            "tp": tp, "fp": fp, "tn": tn, "fn": fn,
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+            "f1": round(f1, 4),
+            "accuracy": round(accuracy, 4),
+            "false_positive_rate": round(fpr, 4),
+        }
+
+    sweep = [_metrics_at(scored, thr) for thr in thresholds]
+    eligible = [m for m in sweep if (m["tp"] + m["fp"] + m["tn"] + m["fn"])]
+    best = max(eligible, key=lambda m: (m["f1"], -m["threshold"])) if eligible else None
+
+    per_language: dict[str, Any] = {}
+    for lang in sorted({str(r["lang"]) for r in scored}):
+        lang_rows = [r for r in scored if str(r["lang"]) == lang]
+        lang_sweep = [_metrics_at(lang_rows, thr) for thr in thresholds]
+        lang_best = max(lang_sweep, key=lambda m: (m["f1"], -m["threshold"]))
+        per_language[lang] = {
+            "samples": len(lang_rows),
+            "best_threshold": lang_best["threshold"],
+            "best_f1": lang_best["f1"],
+            "at_default": _metrics_at(lang_rows, default_threshold),
+        }
+
+    heavily = [r for r in scored if r["label"] == "heavily_edited_ai"]
+    heavily_recall = (
+        round(sum(r["score"] >= default_threshold for r in heavily) / len(heavily), 4)
+        if heavily else None
+    )
+
+    result: dict[str, Any] = {
+        "schema_version": "text-humanize.detector_calibration.v1",
+        "samples": len(scored),
+        "default_threshold": default_threshold,
+        "at_default": _metrics_at(scored, default_threshold),
+        "best": best,
+        "recommended_threshold": best["threshold"] if best else default_threshold,
+        "heavily_edited_ai_recall": heavily_recall,
+        "sweep": sweep,
+        "per_language": per_language,
+    }
+
+    if external_scores:
+        agree = 0
+        compared = 0
+        for row in scored:
+            ext = external_scores.get(str(row["id"]))
+            if ext is None:
+                continue
+            compared += 1
+            internal_pos = row["score"] >= default_threshold
+            external_pos = float(ext) >= default_threshold
+            agree += int(internal_pos == external_pos)
+        result["external_comparison"] = {
+            "compared": compared,
+            "agreement_rate": round(agree / compared, 4) if compared else 0.0,
+        }
+
+    return result
 
 
 _FUNNEL_STAGES = ("audit", "humanize", "export", "publish")

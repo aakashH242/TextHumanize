@@ -51,6 +51,19 @@
       "safe_clean_text": "Please check the attached log.",
       "source": "text-humanize-authored-synthetic",
       "license": "CC0-1.0"
+    },
+    {
+      "id": "wm_en_statistical_001",
+      "lang": "en",
+      "domain": "general",
+      "category": "statistical",
+      "sample_text": "system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system system.",
+      "expected_findings": [
+        "statistical_watermark"
+      ],
+      "safe_clean_text": "The team reviewed the quarterly report on Monday and agreed on the next steps before lunch, then shared a short summary with everyone in the office.",
+      "source": "text-humanize-authored-synthetic",
+      "license": "CC0-1.0"
     }
   ]
 }

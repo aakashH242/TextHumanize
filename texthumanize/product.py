@@ -22,6 +22,7 @@ All functions are offline; callers fetch any remote pages and pass the text in.
 from __future__ import annotations
 
 import html as _html
+import re
 from typing import Any
 
 __all__ = [
@@ -315,24 +316,53 @@ def make_brand_voice(
     name: str,
     *,
     locked_terms: list[str] | None = None,
-    banned_replacements: dict[str, str] | None = None,
+    banned_replacements: dict[str, Any] | None = None,
     tone: str | None = None,
     profile: str = "marketing",
 ) -> dict[str, Any]:
     """Create a reusable brand-voice profile.
 
-    ``locked_terms`` are always preserved verbatim; ``banned_replacements`` maps
-    forbidden substitutions to the term that must be kept; ``tone`` maps to a
-    ``target_style`` preset.
+    ``locked_terms`` are always preserved verbatim. ``banned_replacements`` maps
+    a canonical term to one or more forbidden substitutes (string or list); if
+    a forbidden substitute appears in the output, ``brand_voice_lock`` repairs
+    it back to the canonical term. ``tone`` maps to a ``target_style`` preset.
     """
+    normalized_bans: dict[str, list[str]] = {}
+    for term, variants in (banned_replacements or {}).items():
+        if isinstance(variants, str):
+            variant_list = [variants]
+        else:
+            variant_list = [str(v) for v in variants]
+        normalized_bans[str(term)] = [v for v in variant_list if v.strip()]
     return {
         "schema_version": "text-humanize.brand_voice.v1",
         "name": name,
         "locked_terms": list(locked_terms or []),
-        "banned_replacements": dict(banned_replacements or {}),
+        "banned_replacements": normalized_bans,
         "tone": tone,
         "profile": profile,
     }
+
+
+def _apply_banned_replacements(
+    text: str, banned: dict[str, list[str]]
+) -> tuple[str, list[dict[str, str]]]:
+    """Repair any forbidden substitute back to its canonical term.
+
+    Uses word-boundary, case-insensitive matching so only whole-word forbidden
+    variants are swapped. Returns the repaired text and a list of repairs.
+    """
+    repairs: list[dict[str, str]] = []
+    repaired = text
+    for term, variants in banned.items():
+        for variant in variants:
+            if not variant:
+                continue
+            pattern = re.compile(rf"\b{re.escape(variant)}\b", re.IGNORECASE)
+            if pattern.search(repaired):
+                repaired = pattern.sub(term, repaired)
+                repairs.append({"forbidden": variant, "restored_to": term})
+    return repaired, repairs
 
 
 def brand_voice_lock(
@@ -346,12 +376,17 @@ def brand_voice_lock(
     """Humanize text while locking a brand's important terms.
 
     Locked terms are forced into both ``brand_terms`` preservation and
-    ``keep_keywords``; the result is verified so any term that was present in
-    the input is still present in the output.
+    ``keep_keywords``. Forbidden substitutes from ``banned_replacements`` are
+    repaired back to the canonical term after humanization. The result is
+    verified so any locked term present in the input is still present.
     """
     from texthumanize.core import humanize
 
     locked = [str(term) for term in brand.get("locked_terms", []) if str(term).strip()]
+    banned: dict[str, list[str]] = {
+        str(term): [str(v) for v in variants]
+        for term, variants in (brand.get("banned_replacements") or {}).items()
+    }
     profile = str(brand.get("profile", "marketing"))
     tone = brand.get("tone")
 
@@ -366,18 +401,21 @@ def brand_voice_lock(
         constraints={"keep_keywords": locked},
     )
 
+    final_text, repairs = _apply_banned_replacements(result.text, banned)
+
     violations = [
         term for term in locked
-        if term in text and term not in result.text
+        if term in text and term not in final_text
     ]
     return {
         "schema_version": "text-humanize.brand_voice_lock.v1",
         "brand": brand.get("name"),
         "lang": result.lang,
-        "text": result.text,
+        "text": final_text,
         "locked_terms": locked,
         "violations": violations,
         "locked_intact": not violations,
+        "banned_repairs": repairs,
         "change_ratio": round(result.change_ratio, 4),
     }
 

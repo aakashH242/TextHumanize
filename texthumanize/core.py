@@ -2385,6 +2385,11 @@ def _watermark_spans(text: str, report: Any, wm_mod: Any) -> list[dict[str, Any]
 
 
 def _text_diff(original: str, revised: str, *, max_changes: int = 20) -> list[dict[str, Any]]:
+    # Fast path: when nothing changed (the common case for clean text) skip the
+    # SequenceMatcher entirely — on long, highly repetitive inputs it can take
+    # tens of seconds for an empty diff.
+    if original == revised:
+        return []
     changes: list[dict[str, Any]] = []
     matcher = difflib.SequenceMatcher(a=original, b=revised, autojunk=False)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
@@ -2425,6 +2430,13 @@ def _is_green_hypothesis(
     return rotated < gamma
 
 
+# A few thousand tokens give overwhelming statistical power for a z-test
+# (std ~ sqrt(0.25 * N); at N=4000 a 3% green-ratio deviation already yields
+# z ~ 3.8). Capping the scan keeps watermark detection O(1) in document length
+# instead of growing to tens of seconds on very long inputs.
+_MAX_STAT_TOKENS = 4000
+
+
 def _statistical_watermark_hypotheses(text: str) -> dict[str, Any]:
     tokens = re.findall(r"\b\w+\b", text.lower(), flags=re.UNICODE)
     if len(tokens) < 10:
@@ -2434,6 +2446,9 @@ def _statistical_watermark_hypotheses(text: str) -> dict[str, Any]:
             "results": [],
             "note": "Need at least 10 tokens for a statistical hypothesis scan.",
         }
+    truncated = len(tokens) > _MAX_STAT_TOKENS
+    if truncated:
+        tokens = tokens[:_MAX_STAT_TOKENS]
 
     results: list[dict[str, Any]] = []
     for gamma in (0.25, 0.50, 0.75):
@@ -2480,6 +2495,8 @@ def _statistical_watermark_hypotheses(text: str) -> dict[str, Any]:
         "best": best,
         "results": results[:8],
         "confidence": round(_clamp(confidence), 4),
+        "tokens_capped": truncated,
+        "max_tokens": _MAX_STAT_TOKENS,
     }
 
 
@@ -3093,7 +3110,13 @@ def watermark_report(
         statistical_confidence = max(statistical_confidence, min(1.0, kirchenbauer_z / 5.0))
 
     watermark_types = set(getattr(unicode_report, "watermark_types", []) or [])
-    if str(statistical.get("verdict")) != "no_watermark":
+    # Only treat the statistical channel as a positive finding at a meaningful
+    # z-score. A "possible_watermark" verdict (z 1.5-2.0) is reported in the
+    # statistical detail but must not flip has_watermarks on otherwise clean
+    # text — that produced false positives on ordinary prose.
+    if _safe_float(statistical.get("z_score")) >= 2.0 and str(
+        statistical.get("verdict")
+    ) not in ("no_watermark", "possible_watermark"):
         watermark_types.add("statistical_watermark")
     best = (statistical.get("hypotheses") or {}).get("best")
     if best and _safe_float(best.get("z_score")) >= 3.0:

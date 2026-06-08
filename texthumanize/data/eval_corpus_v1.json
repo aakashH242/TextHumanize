@@ -16,12 +16,16 @@
     },
     {
       "id": "raw_ai",
-      "legacy_aliases": ["ai"],
+      "legacy_aliases": [
+        "ai"
+      ],
       "meaning": "Unedited assistant-style draft with formulaic structure."
     },
     {
       "id": "lightly_edited_ai",
-      "legacy_aliases": ["edited_ai"],
+      "legacy_aliases": [
+        "edited_ai"
+      ],
       "meaning": "Assistant-style draft with light editing; AI-like structure remains visible."
     },
     {
@@ -161,6 +165,281 @@
       "origin": "synthetic_ai_style_heavy_edit",
       "license": "CC0-1.0",
       "text": "У фінальній інструкції залишили три дії: перевірити webhook, повторити імпорт і звірити кількість рядків. Початкова чернетка була ширша, але після редагування тут майже немає загальних порад."
+    },
+    {
+      "id": "de_human_support_001",
+      "lang": "de",
+      "label": "human",
+      "domain": "support",
+      "length_bucket": "lt_300",
+      "text": "Ich habe die Rechnung nochmal geprüft. Die doppelte Buchung ist storniert, aber der Saldo aktualisiert sich erst über Nacht. Falls morgen noch etwas komisch aussieht, schick mir die Bestellnummer.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "de_raw_ai_product_001",
+      "lang": "de",
+      "label": "raw_ai",
+      "domain": "product",
+      "length_bucket": "lt_300",
+      "text": "Darüber hinaus bietet diese Plattform eine umfassende Lösung zur Optimierung betrieblicher Abläufe. Die Implementierung fortschrittlicher Automatisierungsfunktionen ermöglicht eine verbesserte Effizienz und gewährleistet konsistente Ergebnisse für alle Beteiligten.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "de_lightly_edited_ai_blog_001",
+      "lang": "de",
+      "label": "lightly_edited_ai",
+      "domain": "blog",
+      "length_bucket": "lt_300",
+      "text": "Diese Plattform hilft Teams, Abläufe zu optimieren. Durch Automatisierung steigt die Effizienz spürbar, und die Ergebnisse bleiben über verschiedene Bereiche hinweg konsistent und nachvollziehbar.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_light_edit",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "de_heavily_edited_ai_landing_001",
+      "lang": "de",
+      "label": "heavily_edited_ai",
+      "domain": "landing",
+      "length_bucket": "lt_300",
+      "text": "Schneller arbeiten, weniger Handarbeit. Unsere Automatisierung nimmt dir die Routine ab, damit dein Team sich auf das Wesentliche konzentrieren kann.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_heavy_edit",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "fr_human_support_001",
+      "lang": "fr",
+      "label": "human",
+      "domain": "support",
+      "length_bucket": "lt_300",
+      "text": "J'ai revérifié la facture. Le doublon a été annulé, mais le solde ne se met à jour que pendant la nuit. Si ça semble encore faux demain, envoie-moi le numéro de commande et je trace le paiement.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "fr_raw_ai_product_001",
+      "lang": "fr",
+      "label": "raw_ai",
+      "domain": "product",
+      "length_bucket": "lt_300",
+      "text": "De plus, cette plateforme offre une solution complète pour optimiser les flux de travail opérationnels. La mise en œuvre de capacités d'automatisation avancées facilite une efficacité accrue et garantit des résultats cohérents pour toutes les parties prenantes.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "fr_lightly_edited_ai_blog_001",
+      "lang": "fr",
+      "label": "lightly_edited_ai",
+      "domain": "blog",
+      "length_bucket": "lt_300",
+      "text": "Cette plateforme aide les équipes à fluidifier leurs processus. Grâce à l'automatisation, l'efficacité augmente nettement, et les résultats restent cohérents sur l'ensemble des activités.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_light_edit",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "fr_heavily_edited_ai_landing_001",
+      "lang": "fr",
+      "label": "heavily_edited_ai",
+      "domain": "landing",
+      "length_bucket": "lt_300",
+      "text": "Travaillez plus vite, sans la corvée. Notre automatisation gère la routine pour que votre équipe se concentre sur l'essentiel.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_heavy_edit",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "es_human_support_001",
+      "lang": "es",
+      "label": "human",
+      "domain": "support",
+      "length_bucket": "lt_300",
+      "text": "Revisé la factura otra vez. El cargo duplicado ya se anuló, pero el saldo se actualiza durante la noche. Si mañana sigue raro, mándame el número de pedido y rastreo el pago.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "es_raw_ai_product_001",
+      "lang": "es",
+      "label": "raw_ai",
+      "domain": "product",
+      "length_bucket": "lt_300",
+      "text": "Además, esta plataforma ofrece una solución integral para optimizar los flujos de trabajo operativos. La implementación de capacidades avanzadas de automatización facilita una mayor eficiencia y garantiza resultados consistentes para todas las partes interesadas.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "es_lightly_edited_ai_blog_001",
+      "lang": "es",
+      "label": "lightly_edited_ai",
+      "domain": "blog",
+      "length_bucket": "lt_300",
+      "text": "Esta plataforma ayuda a los equipos a agilizar sus procesos. Con la automatización, la eficiencia sube de forma notable y los resultados se mantienen consistentes en distintas áreas.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_light_edit",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "es_heavily_edited_ai_landing_001",
+      "lang": "es",
+      "label": "heavily_edited_ai",
+      "domain": "landing",
+      "length_bucket": "lt_300",
+      "text": "Trabaja más rápido, sin tareas repetitivas. Nuestra automatización se encarga de la rutina para que tu equipo se enfoque en lo importante.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_heavy_edit",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "en_raw_ai_seo_001",
+      "lang": "en",
+      "label": "raw_ai",
+      "domain": "seo",
+      "length_bucket": "300_1000",
+      "text": "In today's competitive digital landscape, leveraging search engine optimization is essential for businesses seeking to maximize their online visibility. By implementing comprehensive keyword strategies, organizations can effectively enhance their rankings and drive measurable organic traffic growth.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "en_human_seo_001",
+      "lang": "en",
+      "label": "human",
+      "domain": "seo",
+      "length_bucket": "lt_300",
+      "text": "We rewrote three product pages last month and rankings moved within two weeks. The trick was not stuffing keywords; it was answering the actual question people typed into Google, then linking to the next logical step.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "en_raw_ai_academic_001",
+      "lang": "en",
+      "label": "raw_ai",
+      "domain": "academic",
+      "length_bucket": "lt_300",
+      "text": "Furthermore, the present study investigates the multifaceted implications of the proposed methodology. The empirical findings demonstrate a statistically significant correlation, thereby underscoring the necessity for further comprehensive investigation across diverse experimental conditions.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "en_human_academic_001",
+      "lang": "en",
+      "label": "human",
+      "domain": "academic",
+      "length_bucket": "lt_300",
+      "text": "Our results were messier than we expected. Two of the five trials showed the effect, one showed the opposite, and the rest were flat. We think sample size is the culprit, but we cannot rule out a measurement artefact.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "en_raw_ai_legal_001",
+      "lang": "en",
+      "label": "raw_ai",
+      "domain": "legal",
+      "length_bucket": "lt_300",
+      "text": "Notwithstanding the foregoing, the parties hereto acknowledge and agree that the aforementioned provisions shall remain in full force and effect. Furthermore, any amendments thereto must be executed in writing and duly authorized by both parties.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "en_human_social_001",
+      "lang": "en",
+      "label": "human",
+      "domain": "social",
+      "length_bucket": "lt_300",
+      "text": "okay this update is actually good. dark mode finally works on the dashboard and the export button stopped eating my files. small things but they add up. nice work team.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "en_lightly_edited_ai_social_001",
+      "lang": "en",
+      "label": "lightly_edited_ai",
+      "domain": "social",
+      "length_bucket": "lt_300",
+      "text": "This update is a solid step forward. Dark mode now works across the dashboard, and exports are reliable again. Small fixes, but together they make the daily workflow noticeably smoother.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_ai_style_light_edit",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "ru_raw_ai_legal_001",
+      "lang": "ru",
+      "label": "raw_ai",
+      "domain": "legal",
+      "length_bucket": "lt_300",
+      "text": "Кроме того, стороны настоящего соглашения подтверждают и соглашаются, что вышеуказанные положения сохраняют полную юридическую силу. Любые изменения должны быть оформлены в письменной форме и надлежащим образом согласованы обеими сторонами.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "ru_human_social_001",
+      "lang": "ru",
+      "label": "human",
+      "domain": "social",
+      "length_bucket": "lt_300",
+      "text": "ну наконец-то починили тёмную тему на дашборде. и кнопка экспорта больше не ломает файлы. мелочь, а приятно. спасибо команде.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "ru_raw_ai_seo_001",
+      "lang": "ru",
+      "label": "raw_ai",
+      "domain": "seo",
+      "length_bucket": "lt_300",
+      "text": "В современном конкурентном цифровом пространстве использование поисковой оптимизации является необходимым условием для максимизации видимости бизнеса в сети. Комплексные стратегии работы с ключевыми словами обеспечивают устойчивый рост органического трафика.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "uk_raw_ai_legal_001",
+      "lang": "uk",
+      "label": "raw_ai",
+      "domain": "legal",
+      "length_bucket": "lt_300",
+      "text": "Крім того, сторони цієї угоди підтверджують і погоджуються, що вищезазначені положення зберігають повну юридичну силу. Будь-які зміни мають бути оформлені письмово та належним чином узгоджені обома сторонами.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "uk_human_social_001",
+      "lang": "uk",
+      "label": "human",
+      "domain": "social",
+      "length_bucket": "lt_300",
+      "text": "нарешті полагодили темну тему на дашборді. і кнопка експорту більше не псує файли. дрібниця, а приємно. дякую команді.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "owned_human_style",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "uk_raw_ai_seo_001",
+      "lang": "uk",
+      "label": "raw_ai",
+      "domain": "seo",
+      "length_bucket": "lt_300",
+      "text": "У сучасному конкурентному цифровому середовищі використання пошукової оптимізації є необхідною умовою для максимізації видимості бізнесу в мережі. Комплексні стратегії роботи з ключовими словами забезпечують стійке зростання органічного трафіку.",
+      "source": "text-humanize-authored-synthetic",
+      "origin": "synthetic_raw_ai_style",
+      "license": "CC0-1.0"
     }
   ]
 }

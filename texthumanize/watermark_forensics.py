@@ -206,6 +206,8 @@ class WatermarkForensics:
     _N_SCHEMES = 8
     # Green-list fraction (standard is 0.5)
     _GAMMA = 0.5
+    # Cap tokens scanned per scheme; see detect() for the rationale.
+    _MAX_SCAN_TOKENS = 4000
 
     def __init__(
         self,
@@ -234,6 +236,12 @@ class WatermarkForensics:
                 text=text, original_text=text,
                 tokens_analyzed=len(tokens),
             )
+
+        # Cap the scan: a few thousand tokens give overwhelming statistical
+        # power for the z-test, so analysing more only adds latency on long
+        # documents (this kept watermark_report O(1) in length).
+        if len(tokens) > self._MAX_SCAN_TOKENS:
+            tokens = tokens[:self._MAX_SCAN_TOKENS]
 
         # Test multiple hash schemes
         best_z = 0.0

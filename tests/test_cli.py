@@ -167,7 +167,7 @@ class TestCLIDetectAI:
             "heavily_edited_ai",
         ]
         assert data["corpus"]["license"]["id"] == "CC0-1.0"
-        assert data["overall"]["total"] == 4
+        assert data["overall"]["total"] >= 4
 
     def test_detector_benchmark_text_output_uses_new_labels(self, capsys):
         run_cli('detector-benchmark', '--langs', 'en')

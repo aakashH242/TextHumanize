@@ -76,6 +76,27 @@ class TestBrandVoice:
         assert result["locked_intact"] is True
         assert result["violations"] == []
 
+    def test_banned_replacements_normalised(self) -> None:
+        brand = make_brand_voice(
+            "Acme", banned_replacements={"AI": ["artificial intelligence", "a.i."], "app": "application"}
+        )
+        # str and list inputs both normalise to lists.
+        assert brand["banned_replacements"]["AI"] == ["artificial intelligence", "a.i."]
+        assert brand["banned_replacements"]["app"] == ["application"]
+
+    def test_banned_replacements_repaired(self) -> None:
+        brand = make_brand_voice(
+            "Acme", locked_terms=["Acme Cloud"],
+            banned_replacements={"AI": ["artificial intelligence"]},
+        )
+        result = brand_voice_lock(
+            "Acme Cloud uses artificial intelligence in production every day.",
+            brand, lang="en", seed=1,
+        )
+        # The forbidden variant must be repaired back to the canonical term.
+        assert "artificial intelligence" not in result["text"].lower()
+        assert any(r["restored_to"] == "AI" for r in result["banned_repairs"])
+
 
 class TestClientReport:
     def test_html_report(self) -> None:

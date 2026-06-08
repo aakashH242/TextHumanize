@@ -40,7 +40,7 @@ import sys as _sys
 import types as _types
 from typing import Any
 
-__version__ = "0.30.0"
+__version__ = "0.31.0"
 __author__ = "TextHumanize Contributors"
 __license__ = "Personal Use Only"
 
@@ -229,6 +229,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "validate_bad_output_bank": ("texthumanize.bad_output_bank", "validate_bad_output_bank"),
     # quality_metrics.py
     "benchmark_leaderboard": ("texthumanize.quality_metrics", "benchmark_leaderboard"),
+    "detector_calibration": ("texthumanize.quality_metrics", "detector_calibration"),
     "release_snapshot": ("texthumanize.quality_metrics", "release_snapshot"),
     "acceptance_rate": ("texthumanize.quality_metrics", "acceptance_rate"),
     "semantic_drift_rate": ("texthumanize.quality_metrics", "semantic_drift_rate"),
@@ -498,6 +499,7 @@ __all__ = [
     "compare_versions",
     "content_plan_risk",
     "count_regression_examples",
+    "detector_calibration",
     "funnel_metrics",
     "load_bad_output_bank",
     "make_brand_voice",

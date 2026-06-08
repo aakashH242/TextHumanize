@@ -34,12 +34,10 @@ def test_list_contributor_packs_exposes_all_pack_types():
 )
 def test_contributor_packs_are_valid(pack: str):
     report = validate_contributor_pack(pack)
-    assert report == {
-        "valid": True,
-        "pack": pack,
-        "entry_count": 3,
-        "errors": [],
-    }
+    assert report["valid"] is True
+    assert report["pack"] == pack
+    assert report["errors"] == []
+    assert report["entry_count"] >= 3
 
 
 def test_load_contributor_pack_filters_by_language_and_domain():
