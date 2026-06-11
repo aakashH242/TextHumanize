@@ -99,7 +99,14 @@ def _check_readme_counters() -> list[str]:
             actual_tests = int(match.group(1))
             if f"{actual_tests:,} tests" not in readme and f"tests-{actual_tests}" not in readme:
                 problems.append(
-                    f"README test count is stale; should be {actual_tests:,}"
+                    f"README test count is stale or malformed; should be {actual_tests:,}"
+                )
+            # The shields Tests badge must be intact on one line (a stray
+            # newline once split it as `tests-2269\n0\n41%20passed`).
+            if "img.shields.io/badge/tests-" in readme and \
+                    f"tests-{actual_tests}%20passed" not in readme:
+                problems.append(
+                    f"README Tests badge is malformed; expected tests-{actual_tests}%20passed"
                 )
     except Exception:
         pass  # collection unavailable — skip the test-count comparison

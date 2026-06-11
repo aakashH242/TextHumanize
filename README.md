@@ -18,9 +18,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 [![PHP 8.1+](https://img.shields.io/badge/php-8.1+-777BB4.svg?logo=php&logoColor=white)](https://www.php.net/)
 &nbsp;&nbsp;
 [![CI](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-2269
-0
-41%20passed-2ea44f.svg?logo=pytest&logoColor=white)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-2269%20passed-2ea44f.svg?logo=pytest&logoColor=white)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
 &nbsp;&nbsp;
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)]()
 [![PyPI](https://img.shields.io/badge/pypi-v0.33.0-3775A9.svg?logo=pypi&logoColor=white)](https://pypi.org/project/texthumanize/)
@@ -28,9 +26,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 
 <br/>
 
-**240,000+ lines of code** · **131 Python modules** · **38-stage pipeline** · **25 languages + universal** · **2,269
-0
-41 tests**
+**240,000+ lines of code** · **131 Python modules** · **38-stage pipeline** · **25 languages + universal** · **2,269 tests**
 
 **3 proprietary technologies:** PHANTOM™ (gradient-guided internal score optimization) · ASH™ (adaptive signature humanization) · SentenceValidator™ (interstage quality gate)
 
@@ -1929,9 +1925,7 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 - **Final sanitization** in `run()` method catches post-loop residual artifacts
 
 ### Stats
-- **2,269
-0
-41 tests** · **131 modules** · **240,000+ lines** · **25 languages** · **38-stage pipeline**
+- **2,269 tests** · **131 modules** · **240,000+ lines** · **25 languages** · **38-stage pipeline**
 
 ---
 
