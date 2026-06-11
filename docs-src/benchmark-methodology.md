@@ -145,6 +145,11 @@ Report Unicode and statistical watermark tests separately:
 - Formal domains can look AI-like because they naturally use templates and
   consistent phrasing.
 - Detector thresholds are not interchangeable across products.
+- The built-in verdict threshold (`0.5`) is deliberately precision-first: on the
+  packaged corpus it keeps the human false-positive rate near zero at the cost
+  of recall (~0.40). For recall-first workflows, choose a threshold from
+  `detector_calibration()` (best-F1 sits near `0.30` on the current corpus) and
+  apply it to the raw `score` rather than relying on the default verdict.
 - Rule-based quality metrics do not replace human review for high-impact
   content.
 - Benchmarks should be versioned; numbers may change after dictionary, detector,

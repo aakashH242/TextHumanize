@@ -12,6 +12,11 @@ branch never fired. The fix reattaches the trailing whitespace explicitly.
 
 from __future__ import annotations
 
+import re
+
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
 import texthumanize as th
 
 
@@ -68,3 +73,35 @@ class TestMinimalWhitespace:
         out = th.humanize(src, lang="en", minimal=True).text
         assert "right?Yes" not in out
         assert "is!Absolutely" not in out
+
+
+# ── Property-based invariant ─────────────────────────────────────────────────
+
+_SENTENCES = [
+    "the cat sat on the warm mat",
+    "we shipped the update on friday",
+    "coffee tasted good this morning",
+    "the report covered three regions",
+    "she fixed the bug before lunch",
+    "rain is expected later today",
+]
+_SEPARATORS = [". ", ".  ", ".\n", ".\n\n", "! ", "? "]
+
+
+def _glued_boundaries(text: str) -> int:
+    """Count sentence-ending punctuation immediately followed by non-space."""
+    return len(re.findall(r"[.!?](?=\S)", text))
+
+
+@given(
+    parts=st.lists(st.sampled_from(_SENTENCES), min_size=1, max_size=4),
+    sep=st.sampled_from(_SEPARATORS),
+)
+@settings(max_examples=30, deadline=None)
+def test_minimal_never_introduces_glued_boundaries(parts: list[str], sep: str) -> None:
+    """Invariant: minimal mode must never delete whitespace after a sentence
+    boundary, i.e. it can only keep or reduce the number of glued boundaries
+    present in the input — never add new ones."""
+    text = sep.join(parts)
+    out = th.humanize(text, lang="en", minimal=True).text
+    assert _glued_boundaries(out) <= _glued_boundaries(text)

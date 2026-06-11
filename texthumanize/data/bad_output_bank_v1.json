@@ -76,6 +76,22 @@
         { "type": "absent", "value": "  " }
       ],
       "description": "High-intensity social humanization must not stack punctuation or double spaces."
+    },
+    {
+      "id": "bob_en_minimal_whitespace_001",
+      "origin": "issue",
+      "lang": "en",
+      "seed": 1,
+      "intensity": 60,
+      "profile": "web",
+      "mode": "minimal",
+      "input": "Sample size looked right. Geographic spread looked right.",
+      "preserve": {},
+      "checks": [
+        { "type": "absent", "value": "right.Geographic" },
+        { "type": "preserve_token", "value": ". " }
+      ],
+      "description": "Client-reported (0.31.1): minimal/only_flagged mode must not eat the space after a sentence-ending period."
     }
   ]
 }

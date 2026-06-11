@@ -41,6 +41,7 @@ class TestBadOutputBankStructure:
 def test_bad_output_regression(entry: dict) -> None:
     preserve = entry.get("preserve") or {}
     brand = preserve.get("brand_terms") or []
+    mode = entry.get("mode")
     result = th.humanize(
         entry["input"],
         lang=entry["lang"],
@@ -49,6 +50,8 @@ def test_bad_output_regression(entry: dict) -> None:
         seed=entry.get("seed"),
         preserve=preserve,
         constraints={"keep_keywords": brand},
+        minimal=(mode == "minimal"),
+        only_flagged=(mode == "only_flagged"),
     )
     out = result.text
     for check in entry["checks"]:

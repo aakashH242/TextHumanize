@@ -18,7 +18,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 [![PHP 8.1+](https://img.shields.io/badge/php-8.1+-777BB4.svg?logo=php&logoColor=white)](https://www.php.net/)
 &nbsp;&nbsp;
 [![CI](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-2248%20passed-2ea44f.svg?logo=pytest&logoColor=white)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-2257%20passed-2ea44f.svg?logo=pytest&logoColor=white)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
 &nbsp;&nbsp;
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)]()
 [![PyPI](https://img.shields.io/pypi/v/texthumanize.svg?logo=pypi&logoColor=white)](https://pypi.org/project/texthumanize/)
@@ -26,7 +26,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 
 <br/>
 
-**240,000+ lines of code** · **130 Python modules** · **38-stage pipeline** · **25 languages + universal** · **2,248 tests**
+**240,000+ lines of code** · **130 Python modules** · **38-stage pipeline** · **25 languages + universal** · **2,257 tests**
 
 **3 proprietary technologies:** PHANTOM™ (gradient-guided internal score optimization) · ASH™ (adaptive signature humanization) · SentenceValidator™ (interstage quality gate)
 
@@ -76,7 +76,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 - [Responsible Use](#-responsible-use)
 - [For Business & Enterprise](#-for-business--enterprise)
 - [FAQ & Troubleshooting](#-faq--troubleshooting)
-- [What's New in v0.31.1](#-whats-new-in-v0311)
+- [What's New in v0.32.0](#-whats-new-in-v0320)
 - [Contributing](#-contributing)
 - [Limitations](#-limitations)
 - [Support the Project](#-support-the-project)
@@ -117,7 +117,7 @@ TextHumanize is a **pure-algorithmic text processing engine** that transforms AI
 | 📊 | **Full analytics** | Readability (6 indices), coherence, plagiarism, stylometric fingerprint, content health score |
 | 🎭 | **Tone control** | Analyze and adjust formality across 7 levels |
 | 📚 | **2,944 dictionary entries** | EN 1,733 + RU 1,345 + UK 1,042 + DE 874 + FR 718 + ES 749 + more |
-| 🏢 | **Enterprise-ready** | Dual license, 2,248+ tests, CI/CD, REST API, Docker, on-prem deployment |
+| 🏢 | **Enterprise-ready** | Dual license, 2,257+ tests, CI/CD, REST API, Docker, on-prem deployment |
 | 🛡️ | **Secure by design** | Input limits, zero network calls, linear-time regex, no eval/exec |
 | 📝 | **Full auditability** | Every call returns `change_ratio`, `quality_score`, `similarity`, `explain()` report |
 
@@ -194,7 +194,7 @@ git clone https://github.com/ksanyok/TextHumanize.git
 cd TextHumanize && pip install -e .
 ```
 
-> **Tip:** Pin your version for production: `pip install texthumanize==0.31.1`
+> **Tip:** Pin your version for production: `pip install texthumanize==0.32.0`
 
 <details>
 <summary><b>PHP / TypeScript</b></summary>
@@ -1456,7 +1456,7 @@ reporting rules, and detector limitations.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  TextHumanize v0.31.1 — AI Score Benchmark              │
+│  TextHumanize v0.32.0 — AI Score Benchmark              │
 ├──────────────────────────────────────────────────────────┤
 │  EN (web/50):    94% → 27%    (reduction: -67pp)        │
 │  EN (web/60):    94% → 23%    (reduction: -71pp)        │
@@ -1848,7 +1848,13 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 
 ---
 
-## 🆕 What's New in v0.31.1
+## 🆕 What's New in v0.32.0
+
+### Whitespace fidelity, contract clarity, drift guards (0.32.0)
+- **Faithful spacing in selective modes** — `minimal=True` / `only_flagged=True` no longer drop the space after a sentence-ending period (0.31.1), and `humanize_sentences()` now preserves the original newlines and paragraph breaks instead of collapsing every gap to a single space.
+- **`detect_ai_sentences()` returns `leading_ws`/`trailing_ws`** with a documented offset contract, so consumers can rejoin sentences without losing inter-sentence spacing.
+- **Release guards** — `dev_check.py` fails on README counter drift; a Hypothesis property test guards minimal-mode spacing; the client whitespace bug is locked into the bad-output regression bank.
+- **Honest thresholds** — the benchmark methodology documents that the default verdict threshold is precision-first (recall ~0.40); recall-first workflows should take a threshold from `detector_calibration()`.
 
 ### Provable quality: calibration, bigger corpus, faster forensics (0.31.0)
 - **Detector calibration** — `detector_calibration()` sweeps decision thresholds over the labelled corpus and reports precision/recall/F1 per threshold and language, the best-F1 threshold, and an optional agreement check against external scores (e.g. GPTZero). Also `scripts/calibrate_detector.py`.
@@ -1909,7 +1915,7 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 - **Final sanitization** in `run()` method catches post-loop residual artifacts
 
 ### Stats
-- **2,248 tests** · **130 modules** · **240,000+ lines** · **25 languages** · **38-stage pipeline**
+- **2,257 tests** · **130 modules** · **240,000+ lines** · **25 languages** · **38-stage pipeline**
 
 ---
 

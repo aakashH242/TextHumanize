@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-06-11
+
+### Added
+- **`detect_ai_sentences()` whitespace fields** — each sentence now also returns `leading_ws` and `trailing_ws`, and the docstring documents the offset/`text` contract so consumers can rejoin sentences without losing inter-sentence spacing.
+- **README counter guard** — `scripts/dev_check.py` now fails when the advertised test/module counts drift from reality (the same class of drift as hardcoded version asserts).
+- **Property-based regression** — a Hypothesis test asserts minimal mode never introduces glued sentence boundaries on arbitrary inputs.
+- **Regression bank — selective mode** — entries can set `"mode": "minimal"`/`"only_flagged"`; the client whitespace bug is now a permanent bank entry.
+
+### Changed
+- **`humanize_sentences()` preserves original spacing** — it rejoins sentences with their original leading/trailing whitespace (newlines and paragraph breaks survive) instead of collapsing every gap to a single space, and after-scores are averaged over all result spans instead of assuming the first span maps to the processed sentence.
+- **Docs** — benchmark methodology notes that the default verdict threshold is precision-first (recall ~0.40); recall-first workflows should pick a threshold from `detector_calibration()`.
+
 ## [0.31.1] - 2026-06-11
 
 ### Fixed

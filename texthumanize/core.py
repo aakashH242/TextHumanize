@@ -2859,7 +2859,14 @@ def detect_ai_sentences(
     """Per-sentence AI detection.
 
     Returns a list of dicts, one per sentence, with keys:
-    text, start, end, ai_probability, label ("human"/"mixed"/"ai").
+    text, start, end, leading_ws, trailing_ws, ai_probability,
+    label ("human"/"mixed"/"ai").
+
+    Contract note: ``text`` is stripped of surrounding whitespace while
+    ``[start:end]`` spans the original slice including that whitespace, so
+    for adjacent sentences ``end == next start``. Consumers that rejoin
+    sentences from ``text`` must reattach ``leading_ws`` and ``trailing_ws``
+    (or slice the source by offsets) or inter-sentence spacing is lost.
 
     Args:
         text: Text to analyse.
@@ -2869,16 +2876,19 @@ def detect_ai_sentences(
     mod = _get_detectors()
     detector = mod.AIDetector(lang=lang)
     results = detector.detect_sentences(text, lang=lang, window=window)
-    return [
-        {
+    sentences: list[dict] = []
+    for r in results:
+        raw = text[r.start:r.end]
+        sentences.append({
             "text": r.text,
             "start": r.start,
             "end": r.end,
+            "leading_ws": raw[:len(raw) - len(raw.lstrip())],
+            "trailing_ws": raw[len(raw.rstrip()):],
             "ai_probability": r.ai_probability,
             "label": r.label,
-        }
-        for r in results
-    ]
+        })
+    return sentences
 
 
 def detect_ai_mixed(text: str, lang: str = "auto") -> list[dict]:
@@ -3971,6 +3981,12 @@ def humanize_sentences(
         sent_text = sent_info.get("sentence", sent_info.get("text", ""))
         ai_prob = sent_info.get("ai_probability", 0.0)
         scores_before.append(ai_prob)
+        # Preserve the original inter-sentence whitespace (newlines, double
+        # spaces) instead of normalising everything to a single space.
+        leading_ws = sent_info.get("leading_ws", "")
+        trailing_ws = sent_info.get("trailing_ws", " ")
+        if leading_ws:
+            processed_parts.append(leading_ws)
 
         if ai_prob >= ai_threshold and len(sent_text.split()) >= 3:
             # Apply graduated intensity based on AI score
@@ -3992,11 +4008,17 @@ def humanize_sentences(
                 "action": "humanized",
             })
             ai_count += 1
-            # Re-score after humanization
+            # Re-score after humanization. The pipeline may split or merge
+            # sentences, so aggregate over all result spans instead of
+            # assuming the first span matches the processed sentence.
             re_sents = detect_ai_sentences(result.text, lang=lang)
-            scores_after.append(
-                re_sents[0].get("ai_probability", ai_prob) if re_sents else ai_prob
-            )
+            if re_sents:
+                re_scores = [
+                    s.get("ai_probability", ai_prob) for s in re_sents
+                ]
+                scores_after.append(sum(re_scores) / len(re_scores))
+            else:
+                scores_after.append(ai_prob)
         else:
             processed_parts.append(sent_text)
             result_sentences.append({
@@ -4008,8 +4030,10 @@ def humanize_sentences(
             })
             human_count += 1
             scores_after.append(ai_prob)
+        if trailing_ws:
+            processed_parts.append(trailing_ws)
 
-    final_text = " ".join(processed_parts)
+    final_text = "".join(processed_parts)
 
     return {
         "text": final_text,

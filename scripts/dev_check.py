@@ -67,6 +67,46 @@ def _check_bad_output_bank() -> list[str]:
     return []
 
 
+def _check_readme_counters() -> list[str]:
+    """Catch drift between README's advertised counts and reality.
+
+    Modules are counted exactly (cheap). Test count is collected via pytest;
+    if collection is unavailable the test-count comparison is skipped rather
+    than failing the whole guard.
+    """
+    import re
+    import subprocess
+
+    problems: list[str] = []
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    # Modules: cheap and exact. The authoritative count must appear verbatim.
+    actual_modules = len(list((ROOT / "texthumanize").rglob("*.py")))
+    if re.search(r"\d{2,4}\s+Python modules", readme) and \
+            f"{actual_modules} Python modules" not in readme:
+        problems.append(
+            f"README Python-module count is stale; should be {actual_modules}"
+        )
+
+    # Tests: collect via pytest; skip if collection is unavailable.
+    try:
+        out = subprocess.run(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q", "tests/"],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=180,
+        ).stdout
+        match = re.search(r"(\d+)\s+tests collected", out)
+        if match and re.search(r"[\d,]{3,}\s+tests\b|tests-\d+", readme):
+            actual_tests = int(match.group(1))
+            if f"{actual_tests:,} tests" not in readme and f"tests-{actual_tests}" not in readme:
+                problems.append(
+                    f"README test count is stale; should be {actual_tests:,}"
+                )
+    except Exception:
+        pass  # collection unavailable — skip the test-count comparison
+
+    return problems
+
+
 def main() -> int:
     checks = [
         ("version sync", _check_version_sync),
@@ -74,6 +114,7 @@ def main() -> int:
         ("quality rounding", _check_quality_rounding),
         ("watermark fixtures", _check_watermark_fixtures),
         ("bad output bank", _check_bad_output_bank),
+        ("readme counters", _check_readme_counters),
     ]
     failed = False
     for name, fn in checks:
