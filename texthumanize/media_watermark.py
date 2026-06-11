@@ -154,8 +154,8 @@ def _scan_markers(blob: bytes) -> list[dict[str, Any]]:
                 "severity": "high" if (b"c2pa" in marker or b"trained" in marker) else "medium",
                 "detail": label,
             })
-    for marker, label in _GENERATOR_SIGNATURES.items():
-        if marker.encode("utf-8") in low:
+    for signature, label in _GENERATOR_SIGNATURES.items():
+        if signature.encode("utf-8") in low:
             findings.append({
                 "type": "generator_signature",
                 "category": "generator",
