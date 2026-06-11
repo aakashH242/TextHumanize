@@ -21,7 +21,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 [![Tests](https://img.shields.io/badge/tests-2257%20passed-2ea44f.svg?logo=pytest&logoColor=white)](https://github.com/ksanyok/TextHumanize/actions/workflows/ci.yml)
 &nbsp;&nbsp;
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)]()
-[![PyPI](https://img.shields.io/pypi/v/texthumanize.svg?logo=pypi&logoColor=white)](https://pypi.org/project/texthumanize/)
+[![PyPI](https://img.shields.io/badge/pypi-v0.32.0-3775A9.svg?logo=pypi&logoColor=white)](https://pypi.org/project/texthumanize/)
 [![License](https://img.shields.io/badge/license-Dual%20(Free%20%2B%20Commercial)-blue.svg)](LICENSE)
 
 <br/>

@@ -111,6 +111,9 @@ def main() -> int:
         _require_contains("README.md", readme, f"What's New in v{expected}")
         _require_contains("README.md", readme, f"pip install texthumanize=={expected}")
         _require_contains("README.md", readme, f"TextHumanize v{expected}")
+        # Static, release-synced PyPI badge (dynamic shields badges lag behind
+        # PyPI by hours; a pinned badge is verified here every release).
+        _require_contains("README.md", readme, f"pypi-v{expected}-")
     except RuntimeError as exc:
         print(str(exc))
         return 1
