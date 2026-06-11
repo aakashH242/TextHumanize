@@ -604,6 +604,16 @@ def _humanize_flagged_only(
             parts.append(text[prev_end:start])
 
         sent_text = sent["text"]
+        end = sent.get("end", start + len(sent_text))
+        # detect_ai_sentences() trims leading/trailing whitespace from
+        # sent["text"] but keeps it inside [start:end], so end == next start
+        # and the gap branch above never fires. Reattach that whitespace
+        # explicitly or every inter-sentence space is silently dropped.
+        original_slice = text[start:end]
+        leading_ws = original_slice[:len(original_slice) - len(original_slice.lstrip())]
+        trailing_ws = original_slice[len(original_slice.rstrip()):]
+        if leading_ws:
+            parts.append(leading_ws)
         if sent.get("ai_probability", 0) > 0.5:
             # Humanize this sentence individually
             flagged_count += 1
@@ -624,7 +634,9 @@ def _humanize_flagged_only(
                     f"{sent_text}"
                 ),
             })
-        prev_end = sent.get("end", start + len(sent_text))
+        if trailing_ws:
+            parts.append(trailing_ws)
+        prev_end = end
 
     # Trailing text
     if prev_end < len(text):

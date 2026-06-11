@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.31.1] - 2026-06-11
+
+### Fixed
+- **Whitespace corruption in `minimal=True` / `only_flagged=True`** — selective humanization dropped the space after every sentence-ending period, turning `"Sample size looked right. Geographic spread looked right."` into `"...right.Geographic..."`. `_humanize_flagged_only` rejoined `detect_ai_sentences()` output by its trimmed `text` while the trailing whitespace lived inside `[start:end]` (so `end == next start` and the gap-recovery branch never fired). The fix reattaches both leading and trailing whitespace of each sentence span, so clean input now round-trips byte-for-byte and rewrites keep their spacing. This also restores meaningful internal AI-score deltas for those modes (previously inflated because the missing spaces tanked burstiness/perplexity). Reported by @ksanyok's client; regression tests in `tests/test_minimal_whitespace.py`.
+
 ## [0.31.0] - 2026-06-09
 
 ### Added

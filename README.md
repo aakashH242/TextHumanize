@@ -76,7 +76,7 @@ readability, and internal risk signals; it is not a bypass guarantee.
 - [Responsible Use](#-responsible-use)
 - [For Business & Enterprise](#-for-business--enterprise)
 - [FAQ & Troubleshooting](#-faq--troubleshooting)
-- [What's New in v0.31.0](#-whats-new-in-v0310)
+- [What's New in v0.31.1](#-whats-new-in-v0311)
 - [Contributing](#-contributing)
 - [Limitations](#-limitations)
 - [Support the Project](#-support-the-project)
@@ -194,7 +194,7 @@ git clone https://github.com/ksanyok/TextHumanize.git
 cd TextHumanize && pip install -e .
 ```
 
-> **Tip:** Pin your version for production: `pip install texthumanize==0.31.0`
+> **Tip:** Pin your version for production: `pip install texthumanize==0.31.1`
 
 <details>
 <summary><b>PHP / TypeScript</b></summary>
@@ -1456,7 +1456,7 @@ reporting rules, and detector limitations.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  TextHumanize v0.31.0 — AI Score Benchmark              │
+│  TextHumanize v0.31.1 — AI Score Benchmark              │
 ├──────────────────────────────────────────────────────────┤
 │  EN (web/50):    94% → 27%    (reduction: -67pp)        │
 │  EN (web/60):    94% → 23%    (reduction: -71pp)        │
@@ -1848,7 +1848,7 @@ Try the [Live Demo](https://texthumanize.link/). For local use, the REST API + S
 
 ---
 
-## 🆕 What's New in v0.31.0
+## 🆕 What's New in v0.31.1
 
 ### Provable quality: calibration, bigger corpus, faster forensics (0.31.0)
 - **Detector calibration** — `detector_calibration()` sweeps decision thresholds over the labelled corpus and reports precision/recall/F1 per threshold and language, the best-F1 threshold, and an optional agreement check against external scores (e.g. GPTZero). Also `scripts/calibrate_detector.py`.
